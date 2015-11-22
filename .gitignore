@@ -1,0 +1,12 @@
+*.swp
+*.*~
+res/*
+profile.profile
+*.pyc
+ani_*.png
+.ropeproject
+build
+src/*.c
+src/*.html
+*.so
+profile/*
