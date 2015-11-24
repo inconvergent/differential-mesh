@@ -11,10 +11,10 @@ from numpy import sin
 from numpy.random import random
 
 NMAX = 10e6
-SIZE = 800
+SIZE = 1000
 ONE = 1./SIZE
 
-RAD = 6*ONE
+RAD = 2*ONE
 H = sqrt(3.)*RAD
 NEARL = 2*RAD
 FARL = RAD*15
@@ -71,8 +71,8 @@ def show(render, dm):
 
     #render.set_front(colors[np_gen[f]])
     render.set_front(FRONT)
-    render_triangle(*vv,fill=False)
-    #render_random_triangle(*vv,grains=60)
+    # render_triangle(*vv,fill=True)
+    render_random_triangle(*vv,grains=60)
 
     #render.set_front([1,1,1,0.05])
     #render.set_front(FRONT)
@@ -80,11 +80,11 @@ def show(render, dm):
 
     #render_random_triangle(*vv,grains=80)
 
-    rad = ONE*3
-    render.set_front([0,0.5,0.5,0.3])
-    render_circle(vv[0], vv[1], rad, fill=True)
-    render_circle(vv[2], vv[3], rad, fill=True)
-    render_circle(vv[4], vv[5], rad, fill=True)
+    # rad = ONE*3
+    # render.set_front([0,0.5,0.5,0.3])
+    # render_circle(vv[0], vv[1], rad, fill=True)
+    # render_circle(vv[2], vv[3], rad, fill=True)
+    # render_circle(vv[4], vv[5], rad, fill=True)
 
   #render.write_to_png('ani_{:05d}.png'.format(i))
 
@@ -130,7 +130,7 @@ def steps(dm):
 
       if dm.is_surface_edge(he)>0:
 
-        if random()<0.5:
+        if random()<0.95:
 
           the = pi*rnd[2*he]
           rad = rnd[2*he+1]*0.5
@@ -153,17 +153,17 @@ def steps(dm):
           rad = rnd[2*he+1]*0.5
           dx = cos(the)*rad*H
           dy = sin(the)*rad*H
-          dx = 0
-          dx = 0
+          # dx = 0
+          # dx = 0
 
           res = dm.throw_seed_triangle(
             he,
-            2*H,
+            H,
             dx,
             dy,
-            NEARL
+            NEARL*0.5
           )
-          print ('isl', res)
+          # print ('isl', res)
 
     dm.optimize_edges(2.0*H, NEARL*0.5)
 
