@@ -19,15 +19,11 @@ ctypedef s_HE sHE
 cdef class Mesh:
 
   cdef long nmax
-
   cdef long vnum
-
   cdef long henum
-
   cdef long fnum
 
   cdef long nz
-
   cdef double zonewidth
 
   cdef long procs
@@ -35,15 +31,10 @@ cdef class Mesh:
   ## ARRAYS
 
   cdef double *X
-
   cdef double *Y
-
   cdef double *I
-
   cdef sHE *HE
-
   cdef long *VHE
-
   cdef long *FHE
 
   cdef Zonemap zonemap
@@ -70,6 +61,8 @@ cdef class Mesh:
 
   cdef void __set_mutual_twins(self, long he1, long he2) nogil
 
+  cdef void __set_edge_of_vertex(self, long ve1, long he1) nogil
+
   cdef long __get_surface_edge_outward_normal(self, long he1, double *nn) nogil
 
   cdef long __get_surface_edge_outward_vector(self, long he1, double *nn) nogil
@@ -86,7 +79,7 @@ cdef class Mesh:
 
   cdef long __set_next_of_triangle(self, long he1, long he2, long he3) nogil
 
-  cdef long __split_longernal_edge(self, long he1) nogil
+  cdef long __split_internal_edge(self, long he1) nogil
 
   cdef long __split_surface_edge(self, long he1) nogil
 
@@ -94,9 +87,9 @@ cdef class Mesh:
 
   cdef double __get_edge_length(self, long he1) nogil
 
-  cdef long __edge_longegrity(self, long he1) nogil
+  cdef long __edge_integrity(self, long he1) nogil
 
-  cdef long __triangle_longegrity(self, long face) nogil
+  cdef long __triangle_integrity(self, long face) nogil
 
   cdef long __triangle_rotation(self, long face) nogil
 
@@ -112,11 +105,15 @@ cdef class Mesh:
 
   cdef long __new_faces_in_ngon(self, double x1, double y1, double rad, long num, double angle) nogil
 
+  cdef long __get_connected_vertices(self, long v1, long *tmp) nogil
+
+  cdef long __get_opposite_edges(self, long v1, long *tmp) nogil
+
   ## EXTERNAL
 
-  cpdef long edge_longegrity(self, long he1)
+  cpdef long edge_integrity(self, long he1)
 
-  cpdef long triangle_longegrity(self, long face)
+  cpdef long triangle_integrity(self, long face)
 
   cpdef long triangle_rotation(self, long face)
 
@@ -140,7 +137,7 @@ cdef class Mesh:
 
   cpdef long np_get_edges_coordinates(self, np.ndarray[double, mode="c",ndim=2] a)
 
-  cpdef long np_get_longernal_edges_coordinates(self, np.ndarray[double, mode="c",ndim=2] a)
+  cpdef long np_get_internal_edges_coordinates(self, np.ndarray[double, mode="c",ndim=2] a)
 
   cpdef long np_get_triangles_gen(self, np.ndarray[long, mode="c",ndim=1] a)
 

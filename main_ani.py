@@ -128,7 +128,9 @@ def steps(dm):
     henum = dm.get_henum()
     rnd = 1-2*random(henum*2)
 
-    for he in unique(randint(henum,size=(henum))):
+    edges = unique(randint(henum,size=(henum)))
+
+    for he in edges:
 
       if dm.is_surface_edge(he)>0:
 
@@ -158,8 +160,6 @@ def steps(dm):
   print_stats(steps_runs, t2-t1, dm)
 
   return True
-
-i = 0
 
 
 def main():

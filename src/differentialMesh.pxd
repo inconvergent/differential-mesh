@@ -30,13 +30,52 @@ cdef class DifferentialMesh(mesh.Mesh):
 
   ## FUNCTIONS
 
-  cdef long __reject(self, double scale) nogil
+  cdef long __reject(
+    self,
+    long v1,
+    long *vertices,
+    long num,
+    double scale,
+    double *sx,
+    double *sy
+  ) nogil
 
-  cdef long __attract(self, double scale) nogil
+  cdef long __attract(
+    self,
+    long v1,
+    long *connected,
+    long num,
+    double scale,
+    double *dxdx,
+    double *dydy
+  ) nogil
 
-  cdef long __edge_vertex_force(self, long he1, long v1, double scale) nogil
+  cdef long __optimize_position(self, double step) nogil
 
-  cdef long __triangle_force(self, double scale) nogil
+  cdef long __throw_seed_triangle(
+    self,
+    long he1,
+    double h,
+    double dx,
+    double dy,
+    double rad,
+    double rot
+  ) nogil
+
+  cdef long __new_triangle_from_surface_edge(
+    self,
+    long he1,
+    double h,
+    double dx,
+    double dy,
+    double minimum_length,
+    double maximum_length,
+    long merge_ragged_edge
+  ) nogil
+
+  #cdef long __edge_vertex_force(self, long he1, long v1, double scale) nogil
+
+  #cdef long __triangle_force(self, double scale) nogil
 
   cdef long __merge_ragged_edge(self, long he1, long he3, long he4) nogil
 
@@ -58,7 +97,8 @@ cdef class DifferentialMesh(mesh.Mesh):
     double h,
     double dx,
     double dy,
-    double rad
+    double rad,
+    double rot
   )
 
   cpdef long new_triangle_from_surface_edge(
@@ -73,4 +113,5 @@ cdef class DifferentialMesh(mesh.Mesh):
   )
 
   cpdef long smooth_intensity(self, double alpha)
+
 

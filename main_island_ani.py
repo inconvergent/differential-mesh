@@ -8,7 +8,7 @@ from numpy import sqrt
 from numpy import zeros
 
 NMAX = 10e6
-SIZE = 1000
+SIZE = 1500
 ONE = 1./SIZE
 
 RAD = 2*ONE
@@ -47,15 +47,17 @@ def show(render, dm):
   global np_gen
   global i
 
-  render.clear_canvas()
+  if i % 4 == 0:
 
-  num = dm.np_get_triangles_coordinates(np_coord)
-  render_random_triangle = render.random_triangle
+    render.clear_canvas()
 
-  for f,vv in enumerate(np_coord[:num,:]):
+    num = dm.np_get_triangles_coordinates(np_coord)
+    render_random_triangle = render.random_triangle
 
-    render.set_front(FRONT)
-    render_random_triangle(*vv,grains=45)
+    for f,vv in enumerate(np_coord[:num,:]):
+
+      render.set_front(FRONT)
+      render_random_triangle(*vv,grains=45)
 
   #render.write_to_png('ani_{:05d}.png'.format(i))
 
@@ -84,7 +86,7 @@ def steps(dm):
     edges = unique(randint(henum,size=(henum)))
     en = len(edges)
     rnd = 1-2*random(en*2)
-    make_island = random(size=en)>0.97
+    make_island = random(size=en)>0.7
 
     for i,(he,isl) in enumerate(zip(edges,make_island)):
 
@@ -114,7 +116,8 @@ def steps(dm):
             H,
             dx*rad*H,
             dy*rad*H,
-            NEARL*0.5
+            NEARL*0.5,
+            the
           )
 
     dm.optimize_edges(2.0*H, NEARL*0.5)
