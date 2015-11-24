@@ -147,7 +147,7 @@ def main():
 
   DM = DifferentialMesh(NMAX, 2*FARL, NEARL, FARL)
 
-  DM.new_faces_in_ngon(MID,MID, H, 7)
+  DM.new_faces_in_ngon(MID,MID, H, 7, 0)
   DM.set_edge_intensity(1, 1)
 
   sources = [(x,y) for x,y in darts(NUM_SOURCES, MID, MID, 0.43, 0.002)]

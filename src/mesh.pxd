@@ -108,6 +108,7 @@ cdef class Mesh:
 
   cdef void __add_edge_intensity(self, long he1, double i) nogil
 
+  cdef long __new_faces_in_ngon(self, double x1, double y1, double rad, long num, double angle) nogil
 
   ## EXTERNAL
 
@@ -121,7 +122,7 @@ cdef class Mesh:
 
   cpdef long new_face(self, double x1, double y1, double x2, double y2, double x3, double y3)
 
-  cpdef list new_faces_in_ngon(self, double x1, double y1, double rad, long num)
+  cpdef long new_faces_in_ngon(self, double x1, double y1, double rad, long num, double angle)
 
   cpdef long next_surface(self, long he1, long direction)
 

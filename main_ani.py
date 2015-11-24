@@ -153,8 +153,6 @@ def steps(dm):
           rad = rnd[2*he+1]*0.5
           dx = cos(the)*rad*H
           dy = sin(the)*rad*H
-          # dx = 0
-          # dx = 0
 
           res = dm.throw_seed_triangle(
             he,
@@ -163,7 +161,6 @@ def steps(dm):
             dy,
             NEARL*0.5
           )
-          # print ('isl', res)
 
     dm.optimize_edges(2.0*H, NEARL*0.5)
 
@@ -189,7 +186,7 @@ def main():
 
   DM = DifferentialMesh(NMAX, 2*FARL, NEARL, FARL)
 
-  DM.new_faces_in_ngon(MID,MID, H, 6)
+  DM.new_faces_in_ngon(MID,MID, H, 6, 0.0)
 
   def wrap(render):
 

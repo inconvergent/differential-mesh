@@ -551,9 +551,9 @@ cdef class DifferentialMesh(mesh.Mesh):
 
       return -1
 
-    # if self.__triangle_rotation(self.HE[he1].face)<0:
+    if self.__triangle_rotation(self.HE[he1].face)<0:
 
-      # return -1
+      return -1
 
     cdef double *normal = [-1,-1]
 
@@ -564,51 +564,14 @@ cdef class DifferentialMesh(mesh.Mesh):
     cdef long first = self.HE[he1].first
     cdef long last = self.HE[he1].last
 
-    cdef double xmid = (self.X[first] + self.X[last])*0.5
-    cdef double ymid = (self.Y[first] + self.Y[last])*0.5
-
-    cdef double x1 = xmid + normal[0]*h + dx
-    cdef double y1 = ymid + normal[1]*h + dy
+    cdef double x1 = (self.X[first] + self.X[last])*0.5 + normal[0]*h
+    cdef double y1 = (self.Y[first] + self.Y[last])*0.5 + normal[1]*h
 
     if self.zonemap.__sphere_is_free(x1, y1, h)<0:
 
       return -1
 
-    cdef long *verts = [-1,-1,-1]
-    cdef long *edges = [-1,-1,-1]
-
-    from numpy.random import random
-
-    cdef long i
-    cdef double xs
-    cdef double ys
-    cdef double rnd = random()
-    for i in xrange(6):
-      xs = x1 + cos(-<double>i/TWOPI+rnd)*rad
-      ys = y1 + sin(-<double>i/TWOPI+rnd)*rad
-      verts[i] = self.__new_vertex(xs, ys)
-      self.__set_vertex_intensity(verts[i], 1.0)
-
-    cdef double vc = vcross(
-      self.X[verts[0]], self.Y[verts[0]],
-      self.X[verts[1]], self.Y[verts[1]],
-      self.X[verts[2]], self.Y[verts[2]],
-    )
-    print(vc)
-
-    self.new_faces_in_ngon(xs,ys,rad,5)
-
-    # edges[0] = self.__new_edge(verts[0],verts[1])
-    # edges[1] = self.__new_edge(verts[1],verts[2])
-    # edges[2] = self.__new_edge(verts[2],verts[0])
-
-    # cdef long f = self.__new_face(edges[0])
-
-    # self.__set_face_of_three_edges(f, edges[0], edges[1], edges[2])
-    # self.__set_next_of_triangle(edges[0], edges[1], edges[2])
-    # self.__set_gen_of_three_edges(0, edges[0], edges[1], edges[2])
-
-    return 1
+    return self.__new_faces_in_ngon(x1,y1,rad,3,0.0)
 
   @cython.wraparound(False)
   @cython.boundscheck(False)

@@ -8,8 +8,6 @@ from numpy import sqrt
 from numpy import zeros
 from numpy import cos
 from numpy import sin
-from numpy import power
-#from numpy import floor
 from numpy.random import random
 
 NMAX = 10e7
@@ -37,8 +35,6 @@ GREEN = [0,1,0,0.3]
 TWOPI = pi*2.
 
 np_coord = zeros((NMAX,6), 'float')
-np_edges_coord = zeros((NMAX,4), 'float')
-np_gen = zeros(NMAX, 'int')
 
 i = 0
 
@@ -50,35 +46,17 @@ def show(render, dm):
 
   render.clear_canvas()
 
-  render_random_uniform_circle = render.random_uniform_circle
-
   #num = dm.np_get_triangles_coordinates(np_coord)
-  num = dm.np_get_edges_coordinates(np_edges_coord)
+  num = dm.np_get_triangles_coordinates(np_coord)
   render_random_triangle = render.random_triangle
-  dm.np_get_edges_gen(np_gen)
-  #render_triangle = render.triangle
+  rgba = FRONT
+  render.set_front(rgba)
 
-  dd = sqrt(power(np_edges_coord[:,2]-np_edges_coord[:,0],2) +
-       power(np_edges_coord[:,3]-np_edges_coord[:,1],2))*0.5
+  for e,vv in enumerate(np_coord[:num,:]):
 
-  for e,vv in enumerate(np_edges_coord[:num,:]):
+    render_random_triangle(*vv,grains=80)
 
-    if np_gen[e]%2==0:
-      rgba = RED
-    else:
-      rgba = FRONT
-
-    render.set_front(rgba)
-
-    #render.set_front(FRONT)
-    #render_random_triangle(*vv,grains=80)
-    render_random_uniform_circle(vv[0], vv[1], dd[e], grains=30, dst=0)
-    #render_random_parallelogram(*vv,grains=200)
-
-    #render.set_front([0,0,0,0.8])
-    #render_triangle(*vv,fill=False)
-
-  render.write_to_png('res/test_b_{:05d}.png'.format(i))
+  render.write_to_png('res/res_a_{:05d}.png'.format(i))
 
   i += 1
 
@@ -93,9 +71,7 @@ def main():
 
   DM = DifferentialMesh(NMAX, 2*FARL, NEARL, FARL)
 
-  DM.new_face(MID-RAD, MID,
-              MID+RAD, MID,
-              MID, MID+H)
+  DM.new_faces_in_ngon(MID, MID, H, 6, 0.0)
 
   render = Render(SIZE, BACK, FRONT)
   render.set_line_width(LINEWIDTH)
