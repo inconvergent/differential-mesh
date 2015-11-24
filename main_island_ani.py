@@ -6,9 +6,6 @@ from __future__ import print_function
 from numpy import pi
 from numpy import sqrt
 from numpy import zeros
-from numpy import cos
-from numpy import sin
-from numpy.random import random
 
 NMAX = 10e6
 SIZE = 1000
@@ -44,47 +41,19 @@ steps_runs = 0
 
 def show(render, dm):
 
-  from numpy import floor
-
   global np_coord
   global np_gen
   global i
 
-  colors = [
-    #[0,0,0,0.8],
-    #[0.4,0.4,0.4,0.1],
-    #[0.5,0.5,0.5,0.1],
-    [0.6,0.6,0.6,0.1]
-  ]
-
   render.clear_canvas()
 
   num = dm.np_get_triangles_coordinates(np_coord)
-  #dm.np_get_triangles_gen(np_gen)
   render_random_triangle = render.random_triangle
-  render_triangle = render.triangle
-  render_circle = render.circle
-
-  #np_gen[:num] = floor(np_gen[:num]/4.)%len(colors)
 
   for f,vv in enumerate(np_coord[:num,:]):
 
-    #render.set_front(colors[np_gen[f]])
     render.set_front(FRONT)
-    # render_triangle(*vv,fill=True)
     render_random_triangle(*vv,grains=60)
-
-    #render.set_front([1,1,1,0.05])
-    #render.set_front(FRONT)
-    #render_triangle(*vv,fill=False)
-
-    #render_random_triangle(*vv,grains=80)
-
-    # rad = ONE*3
-    # render.set_front([0,0.5,0.5,0.3])
-    # render_circle(vv[0], vv[1], rad, fill=True)
-    # render_circle(vv[2], vv[3], rad, fill=True)
-    # render_circle(vv[4], vv[5], rad, fill=True)
 
   #render.write_to_png('ani_{:05d}.png'.format(i))
 
@@ -93,11 +62,12 @@ def show(render, dm):
 
 def steps(dm):
 
-  from time import time
-  from modules.helpers import print_stats
-
+  from numpy import cos
+  from numpy import sin
   from numpy import unique
   from numpy.random import randint, random
+  from time import time
+  from modules.helpers import print_stats
 
   global steps_runs
   steps_runs += 1
@@ -107,36 +77,24 @@ def steps(dm):
 
     dm.optimize_position(OPT_STP)
 
-    #various tests. some of these will tend to fail. especially when
-    #you use optimize_position
-
-    #for f in xrange(dm.get_fnum()):
-
-      #if dm.triangle_integrity(f)<0:
-        #raise ValueError('integrity 1')
-
-      ## if dm.triangle_rotation(f)<0:
-        ## raise ValueError('rotation 1')
-
-    #for e in xrange(dm.get_henum()):
-
-      #if dm.edge_integrity(e)<0:
-        #raise ValueError('edge integrity 1')
-
     henum = dm.get_henum()
-    rnd = 1-2*random(henum*2)
 
-    for he in unique(randint(henum,size=(henum))):
+    edges = unique(randint(henum,size=(henum)))
+    en = len(edges)
+    rnd = 1-2*random(en*2)
+    make_island = random(size=en)>0.95
+
+    for i,(he,isl) in enumerate(zip(edges,make_island)):
 
       if dm.is_surface_edge(he)>0:
 
-        if random()<0.95:
+        the = pi*rnd[2*i]
+        rad = rnd[2*i+1]*0.5
 
-          the = pi*rnd[2*he]
-          rad = rnd[2*he+1]*0.5
+        if not isl:
+
           dx = cos(the)*rad*H
           dy = sin(the)*rad*H
-
           dm.new_triangle_from_surface_edge(
             he,
             H,
@@ -149,12 +107,9 @@ def steps(dm):
 
         else:
 
-          the = 2*pi*rnd[2*he]
-          rad = rnd[2*he+1]*0.5
           dx = cos(the)*rad*H
           dy = sin(the)*rad*H
-
-          res = dm.throw_seed_triangle(
+          dm.throw_seed_triangle(
             he,
             H,
             dx,
@@ -196,7 +151,6 @@ def main():
     return res
 
   render = Animate(SIZE, BACK, FRONT, wrap)
-  # render.get_colors_from_file('../colors/red_earth.gif')
   render.set_line_width(LINEWIDTH)
 
   gtk.main()
