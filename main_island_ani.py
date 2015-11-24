@@ -11,10 +11,10 @@ from numpy import sin
 from numpy.random import random
 
 NMAX = 10e6
-SIZE = 800
+SIZE = 1000
 ONE = 1./SIZE
 
-RAD = 6*ONE
+RAD = 2*ONE
 H = sqrt(3.)*RAD
 NEARL = 2*RAD
 FARL = RAD*15
@@ -71,8 +71,8 @@ def show(render, dm):
 
     #render.set_front(colors[np_gen[f]])
     render.set_front(FRONT)
-    render_triangle(*vv,fill=False)
-    #render_random_triangle(*vv,grains=60)
+    # render_triangle(*vv,fill=True)
+    render_random_triangle(*vv,grains=60)
 
     #render.set_front([1,1,1,0.05])
     #render.set_front(FRONT)
@@ -80,11 +80,11 @@ def show(render, dm):
 
     #render_random_triangle(*vv,grains=80)
 
-    rad = ONE*3
-    render.set_front([0,0.5,0.5,0.3])
-    render_circle(vv[0], vv[1], rad, fill=True)
-    render_circle(vv[2], vv[3], rad, fill=True)
-    render_circle(vv[4], vv[5], rad, fill=True)
+    # rad = ONE*3
+    # render.set_front([0,0.5,0.5,0.3])
+    # render_circle(vv[0], vv[1], rad, fill=True)
+    # render_circle(vv[2], vv[3], rad, fill=True)
+    # render_circle(vv[4], vv[5], rad, fill=True)
 
   #render.write_to_png('ani_{:05d}.png'.format(i))
 
@@ -97,7 +97,7 @@ def steps(dm):
   from modules.helpers import print_stats
 
   from numpy import unique
-  from numpy.random import randint
+  from numpy.random import randint, random
 
   global steps_runs
   steps_runs += 1
@@ -130,20 +130,37 @@ def steps(dm):
 
       if dm.is_surface_edge(he)>0:
 
-        the = pi*rnd[2*he]
-        rad = rnd[2*he+1]*0.5
-        dx = cos(the)*rad*H
-        dy = sin(the)*rad*H
+        if random()<0.95:
 
-        dm.new_triangle_from_surface_edge(
-          he,
-          H,
-          dx,
-          dy,
-          minimum_length=H*0.8,
-          maximum_length=H*2,
-          merge_ragged_edge=1
-        )
+          the = pi*rnd[2*he]
+          rad = rnd[2*he+1]*0.5
+          dx = cos(the)*rad*H
+          dy = sin(the)*rad*H
+
+          dm.new_triangle_from_surface_edge(
+            he,
+            H,
+            dx,
+            dy,
+            minimum_length=H*0.8,
+            maximum_length=H*2,
+            merge_ragged_edge=1
+          )
+
+        else:
+
+          the = 2*pi*rnd[2*he]
+          rad = rnd[2*he+1]*0.5
+          dx = cos(the)*rad*H
+          dy = sin(the)*rad*H
+
+          res = dm.throw_seed_triangle(
+            he,
+            H,
+            dx,
+            dy,
+            NEARL*0.5
+          )
 
     dm.optimize_edges(2.0*H, NEARL*0.5)
 
