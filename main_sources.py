@@ -40,6 +40,8 @@ STEPS_ITT = 200
 
 NUM_SOURCES = 2500*4
 
+PROCS = 6
+
 
 GRAINS = 80
 
@@ -145,7 +147,7 @@ def main():
   from numpy.random import randint
 
 
-  DM = DifferentialMesh(NMAX, 2*FARL, NEARL, FARL)
+  DM = DifferentialMesh(NMAX, 2*FARL, NEARL, FARL, PROCS)
 
   DM.new_faces_in_ngon(MID,MID, H, 7, 0)
   DM.set_edge_intensity(1, 1)

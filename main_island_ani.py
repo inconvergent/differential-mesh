@@ -38,6 +38,8 @@ np_gen = zeros(NMAX, 'int')
 i = 0
 steps_runs = 0
 
+PROCS = 2
+
 
 def show(render, dm):
 
@@ -53,7 +55,7 @@ def show(render, dm):
   for f,vv in enumerate(np_coord[:num,:]):
 
     render.set_front(FRONT)
-    render_random_triangle(*vv,grains=60)
+    render_random_triangle(*vv,grains=45)
 
   #render.write_to_png('ani_{:05d}.png'.format(i))
 
@@ -82,7 +84,7 @@ def steps(dm):
     edges = unique(randint(henum,size=(henum)))
     en = len(edges)
     rnd = 1-2*random(en*2)
-    make_island = random(size=en)>0.95
+    make_island = random(size=en)>0.97
 
     for i,(he,isl) in enumerate(zip(edges,make_island)):
 
@@ -90,16 +92,16 @@ def steps(dm):
 
         the = pi*rnd[2*i]
         rad = rnd[2*i+1]*0.5
+        dx = cos(the)
+        dy = sin(the)
 
         if not isl:
 
-          dx = cos(the)*rad*H
-          dy = sin(the)*rad*H
           dm.new_triangle_from_surface_edge(
             he,
             H,
-            dx,
-            dy,
+            dx*rad*H,
+            dy*rad*H,
             minimum_length=H*0.8,
             maximum_length=H*2,
             merge_ragged_edge=1
@@ -107,13 +109,11 @@ def steps(dm):
 
         else:
 
-          dx = cos(the)*rad*H
-          dy = sin(the)*rad*H
           dm.throw_seed_triangle(
             he,
             H,
-            dx,
-            dy,
+            dx*rad*H,
+            dy*rad*H,
             NEARL*0.5
           )
 
@@ -139,7 +139,7 @@ def main():
   from differentialMesh import DifferentialMesh
   from render.render import Animate
 
-  DM = DifferentialMesh(NMAX, 2*FARL, NEARL, FARL)
+  DM = DifferentialMesh(NMAX, 2*FARL, NEARL, FARL, PROCS)
 
   DM.new_faces_in_ngon(MID,MID, H, 6, 0.0)
 

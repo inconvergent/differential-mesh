@@ -45,7 +45,7 @@ cdef class Mesh:
 
   """
 
-  def __init__(self, long nmax, double zonewidth):
+  def __init__(self, long nmax, double zonewidth, long procs):
     """
     initialize triangular mesh.
 
@@ -69,6 +69,8 @@ cdef class Mesh:
 
     self.nz = long(1.0 /zonewidth)
 
+    self.procs = procs
+
     if self.nz<3:
       self.nz = 1
       self.zonewidth = 1.0
@@ -76,6 +78,7 @@ cdef class Mesh:
     self.zonemap = Zonemap(self.nz)
     self.zonemap.__assign_xy_arrays(self.X, self.Y)
 
+    print('procs: {:d}'.format(procs))
     print('nmax: {:d}'.format(nmax))
     print('number of zones: {:d}'.format(self.nz))
     print('zonewidth: {:f}'.format(zonewidth))

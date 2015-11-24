@@ -38,6 +38,8 @@ NUM_SOURCES = 100
 
 TWOPI = pi*2.
 
+PROCS = 2
+
 np_coord = zeros((NMAX,6), 'float')
 
 i = 0
@@ -143,7 +145,7 @@ def main():
   from modules.helpers import darts
 
 
-  DM = DifferentialMesh(NMAX, 2*FARL, NEARL, FARL)
+  DM = DifferentialMesh(NMAX, 2*FARL, NEARL, FARL, PROCS)
 
   DM.new_faces_in_ngon(MID,MID, H, 3, 0)
   DM.set_edge_intensity(1, 1)

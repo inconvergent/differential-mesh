@@ -30,6 +30,8 @@ cdef class Mesh:
 
   cdef double zonewidth
 
+  cdef long procs
+
   ## ARRAYS
 
   cdef double *X

@@ -31,6 +31,8 @@ RED = [1,0,0,0.05]
 BLUE = [0,0,1,0.3]
 GREEN = [0,1,0,0.3]
 
+PROCS = 6
+
 
 TWOPI = pi*2.
 
@@ -69,7 +71,7 @@ def main():
   from modules.helpers import print_stats
 
 
-  DM = DifferentialMesh(NMAX, 2*FARL, NEARL, FARL)
+  DM = DifferentialMesh(NMAX, 2*FARL, NEARL, FARL, PROCS)
 
   DM.new_faces_in_ngon(MID, MID, H, 6, 0.0)
 

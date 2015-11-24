@@ -35,6 +35,8 @@ STEPS_ITT = 1
 
 TWOPI = pi*2.
 
+PROCS = 2
+
 np_coord = zeros((NMAX,6), 'float')
 np_gen = zeros(NMAX, 'int')
 
@@ -167,7 +169,7 @@ def main():
   from differentialMesh import DifferentialMesh
   from render.render import Animate
 
-  DM = DifferentialMesh(NMAX, 2*FARL, NEARL, FARL)
+  DM = DifferentialMesh(NMAX, 2*FARL, NEARL, FARL, PROCS)
 
   DM.new_faces_in_ngon(MID,MID, H, 6, 0.0)
 

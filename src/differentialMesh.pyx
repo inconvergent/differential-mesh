@@ -26,9 +26,9 @@ cdef double TWOPI = 2.*pi
 
 cdef class DifferentialMesh(mesh.Mesh):
 
-  def __init__(self, long nmax, double zonewidth, double nearl, double farl):
+  def __init__(self, long nmax, double zonewidth, double nearl, double farl, long procs):
 
-    mesh.Mesh.__init__(self, nmax, zonewidth)
+    mesh.Mesh.__init__(self, nmax, zonewidth, procs)
 
     """
     - nearl is the closest comfortable distance between two vertices.
@@ -108,7 +108,7 @@ cdef class DifferentialMesh(mesh.Mesh):
     cdef long neighbor_num
 
     #if True:
-    with nogil, parallel(num_threads=4):
+    with nogil, parallel(num_threads=self.procs):
 
       vertices = <long *>malloc(asize*sizeof(long))
 
@@ -561,11 +561,11 @@ cdef class DifferentialMesh(mesh.Mesh):
 
       return -1
 
-    cdef long first = self.HE[he1].first
-    cdef long last = self.HE[he1].last
+    cdef long a = self.HE[he1].first
+    cdef long b = self.HE[he1].last
 
-    cdef double x1 = (self.X[first] + self.X[last])*0.5 + normal[0]*h
-    cdef double y1 = (self.Y[first] + self.Y[last])*0.5 + normal[1]*h
+    cdef double x1 = (self.X[a]+self.X[b])*0.5 + normal[0]*h + dx
+    cdef double y1 = (self.Y[a]+self.Y[b])*0.5 + normal[1]*h + dy
 
     if self.zonemap.__sphere_is_free(x1, y1, h)<0:
 
