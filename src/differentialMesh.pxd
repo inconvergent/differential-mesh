@@ -52,12 +52,25 @@ cdef class DifferentialMesh(mesh.Mesh):
 
   cpdef long optimize_position(self, double step)
 
-  cpdef long new_triangle_from_surface_edge(self, long he1, double h,
-                                           double dx,
-                                           double dy,
-                                           double minimum_length=*,
-                                           double maximum_length=*,
-                                           long merge_ragged_edge=*)
+  cpdef long throw_seed_triangle(
+    self,
+    long he1,
+    double h,
+    double dx,
+    double dy,
+    double rad
+  )
+
+  cpdef long new_triangle_from_surface_edge(
+    self,
+    long he1,
+    double h,
+    double dx,
+    double dy,
+    double minimum_length=*,
+    double maximum_length=*,
+    long merge_ragged_edge=*
+  )
 
   cpdef long smooth_intensity(self, double alpha)
 

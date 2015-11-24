@@ -10,6 +10,8 @@ from zonemap cimport Zonemap
 
 from cython.parallel import parallel, prange
 
+from numpy import pi
+
 from libc.math cimport sqrt
 from libc.math cimport pow
 from libc.math cimport cos
@@ -18,6 +20,8 @@ from libc.math cimport sin
 from helpers cimport double_array_init
 from helpers cimport long_array_init
 from helpers cimport vcross
+
+cdef double TWOPI = 2.*pi
 
 
 cdef class DifferentialMesh(mesh.Mesh):
@@ -527,6 +531,75 @@ cdef class DifferentialMesh(mesh.Mesh):
 
     free(newintensity)
     free(count)
+
+    return 1
+
+  @cython.wraparound(False)
+  @cython.boundscheck(False)
+  @cython.nonecheck(False)
+  @cython.cdivision(True)
+  cpdef long throw_seed_triangle(
+    self,
+    long he1,
+    double h,
+    double dx,
+    double dy,
+    double rad
+  ):
+
+    if self.__is_surface_edge(he1)<0:
+
+      return -1
+
+    if self.__triangle_rotation(self.HE[he1].face)<0:
+
+      return -1
+
+    cdef double *normal = [-1,-1]
+
+    if self.__get_surface_edge_outward_normal(he1, normal)<0:
+
+      return -1
+
+    cdef long first = self.HE[he1].first
+    cdef long last = self.HE[he1].last
+
+    cdef double xmid = (self.X[first] + self.X[last])*0.5
+    cdef double ymid = (self.Y[first] + self.Y[last])*0.5
+
+    cdef double x1 = xmid + normal[0]*h + dx
+    cdef double y1 = ymid + normal[1]*h + dy
+
+    if self.zonemap.__sphere_is_free(x1, y1, h)<0:
+
+      return -1
+
+    print(normal[0], normal[1])
+
+    cdef long *verts = [-1,-1,-1]
+    cdef long *edges = [-1,-1,-1]
+
+    from numpy.random import random
+
+    cdef long i
+    cdef double xs
+    cdef double ys
+    cdef double rnd = random()
+    for i in xrange(3):
+      xs = x1 + cos(i/TWOPI+rnd)*rad
+      ys = y1 + sin(i/TWOPI+rnd)*rad
+      verts[i] = self.__new_vertex(xs, ys)
+      self.__set_vertex_intensity(verts[i], 1.0)
+
+    edges[0] = self.__new_edge(verts[0],verts[1])
+    edges[1] = self.__new_edge(verts[1],verts[2])
+    edges[2] = self.__new_edge(verts[2],verts[0])
+
+    cdef long f = self.__new_face(edges[0])
+
+    self.__set_face_of_three_edges(f, edges[0], edges[1], edges[2])
+    self.__set_next_of_triangle(edges[0], edges[1], edges[2])
+    self.__set_gen_of_three_edges(0, edges[0], edges[1], edges[2])
 
     return 1
 

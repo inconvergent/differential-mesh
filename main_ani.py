@@ -97,7 +97,7 @@ def steps(dm):
   from modules.helpers import print_stats
 
   from numpy import unique
-  from numpy.random import randint
+  from numpy.random import randint, random
 
   global steps_runs
   steps_runs += 1
@@ -130,20 +130,40 @@ def steps(dm):
 
       if dm.is_surface_edge(he)>0:
 
-        the = pi*rnd[2*he]
-        rad = rnd[2*he+1]*0.5
-        dx = cos(the)*rad*H
-        dy = sin(the)*rad*H
+        if random()<0.5:
 
-        dm.new_triangle_from_surface_edge(
-          he,
-          H,
-          dx,
-          dy,
-          minimum_length=H*0.8,
-          maximum_length=H*2,
-          merge_ragged_edge=1
-        )
+          the = pi*rnd[2*he]
+          rad = rnd[2*he+1]*0.5
+          dx = cos(the)*rad*H
+          dy = sin(the)*rad*H
+
+          dm.new_triangle_from_surface_edge(
+            he,
+            H,
+            dx,
+            dy,
+            minimum_length=H*0.8,
+            maximum_length=H*2,
+            merge_ragged_edge=1
+          )
+
+        else:
+
+          the = 2*pi*rnd[2*he]
+          rad = rnd[2*he+1]*0.5
+          dx = cos(the)*rad*H
+          dy = sin(the)*rad*H
+          dx = 0
+          dx = 0
+
+          res = dm.throw_seed_triangle(
+            he,
+            2*H,
+            dx,
+            dy,
+            NEARL
+          )
+          print ('isl', res)
 
     dm.optimize_edges(2.0*H, NEARL*0.5)
 
