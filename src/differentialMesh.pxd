@@ -73,9 +73,15 @@ cdef class DifferentialMesh(mesh.Mesh):
     long merge_ragged_edge
   ) nogil
 
-  #cdef long __edge_vertex_force(self, long he1, long v1, double scale) nogil
-
-  #cdef long __triangle_force(self, double scale) nogil
+  cdef long __edge_vertex_force(
+    self,
+    long v1,
+    long *opposite,
+    long num,
+    double scale,
+    double *dxdx,
+    double *dydy
+  ) nogil
 
   cdef long __merge_ragged_edge(self, long he1, long he3, long he4) nogil
 

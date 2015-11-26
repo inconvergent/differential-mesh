@@ -135,75 +135,54 @@ cdef class DifferentialMesh(mesh.Mesh):
 
     return 1
 
-  # @cython.wraparound(False)
-  # @cython.boundscheck(False)
-  # @cython.nonecheck(False)
-  # @cython.cdivision(True)
-  # cdef long __edge_vertex_force(self, long he1, long v1, double scale) nogil:
+  @cython.wraparound(False)
+  @cython.boundscheck(False)
+  @cython.nonecheck(False)
+  @cython.cdivision(True)
+  cdef long __edge_vertex_force(
+    self,
+    long v1,
+    long *opposite,
+    long num,
+    double scale,
+    double *dxdx,
+    double *dydy
+  ) nogil:
 
-    # cdef long henum = self.henum
-    # cdef double nearl = self.nearl
+    cdef long a
+    cdef long b
+    cdef long k
+    cdef long he
 
-    # cdef long a = self.HE[he1].first
-    # cdef long b = self.HE[he1].last
+    cdef double dx
+    cdef double dy
+    cdef double nrm
 
-    # cdef double x = (self.X[b]+self.X[a])*0.5
-    # cdef double y = (self.Y[b]+self.Y[a])*0.5
+    for k in xrange(num):
 
-    # cdef double dx = self.X[v1]-x
-    # cdef double dy = self.Y[v1]-y
-    # cdef double nrm = sqrt(dx*dx+dy*dy)
+      he = opposite[k]
 
-    # if nrm<=1e-9:
+      a = self.HE[he].first
+      b = self.HE[he].last
 
-      # return -1
+      dx = self.X[v1]-(self.X[b]+self.X[a])*0.5
+      dy = self.Y[v1]-(self.Y[b]+self.Y[a])*0.5
+      nrm = sqrt(dx*dx+dy*dy)
 
-    # if vcross(self.X[a], self.Y[a],
-      # self.X[b], self.Y[b],
-      # self.X[v1], self.Y[v1])>0:
+      if nrm<=1e-9:
+        continue
 
-      # ## rotation ok
+      if nrm>0.5*sqrt(3.0)*self.nearl:
 
-      # if nrm>0.5*sqrt(3.0)*nearl:
+        dxdx[v1] -= dx/nrm*scale*0.1
+        dydy[v1] -= dy/nrm*scale*0.1
 
-        # #pass
-        # self.DX[v1] += -dx/nrm*scale
-        # self.DY[v1] += -dy/nrm*scale
+      else:
 
-      # else:
+        dxdx[v1] += dx/nrm*scale
+        dydy[v1] += dy/nrm*scale
 
-        # self.DX[v1] += dx/nrm*scale
-        # self.DY[v1] += dy/nrm*scale
-
-    # else:
-
-      # ## bad rotation
-
-      # self.DX[v1] += -dx/nrm*scale
-      # self.DY[v1] += -dy/nrm*scale
-
-    # return 1
-
-  # @cython.wraparound(False)
-  # @cython.boundscheck(False)
-  # @cython.nonecheck(False)
-  # cdef long __triangle_force(self, double scale) nogil:
-
-    # cdef long ab
-    # cdef long bc
-    # cdef long ca
-
-    # for f in xrange(self.fnum):
-
-      # ab = self.FHE[f]
-      # bc = self.HE[ab].next
-      # ca = self.HE[bc].next
-
-      # self.__edge_vertex_force(ab,self.HE[ca].first,scale)
-      # self.__edge_vertex_force(bc,self.HE[ab].first,scale)
-      # self.__edge_vertex_force(ca,self.HE[ab].last,scale)
-
-    # return 1
+    return 1
 
   @cython.wraparound(False)
   @cython.boundscheck(False)
@@ -266,13 +245,11 @@ cdef class DifferentialMesh(mesh.Mesh):
     cdef double scale = 0.1
 
     with nogil, parallel(num_threads=self.procs):
-    # if True:
 
       vertices = <long *>malloc(asize*sizeof(long))
       connected = <long *>malloc(asize*sizeof(long))
 
       for v in prange(self.vnum, schedule='guided'):
-      # for v in xrange(self.vnum):
 
         self.DX[v] = 0.0
         self.DY[v] = 0.0
@@ -302,10 +279,21 @@ cdef class DifferentialMesh(mesh.Mesh):
           self.DY
         )
 
+        cnum = self.__get_opposite_edges(v, connected)
+        self.__edge_vertex_force(
+          v,
+          connected,
+          cnum,
+          scale,
+          self.DX,
+          self.DY
+        )
+
       free(vertices)
       free(connected)
 
     for v in range(self.vnum):
+
       self.X[v] += self.DX[v]*step
       self.Y[v] += self.DY[v]*step
       self.zonemap.__update_v(v)
@@ -552,7 +540,8 @@ cdef class DifferentialMesh(mesh.Mesh):
 
       return -1
 
-    return self.__new_faces_in_ngon(x1,y1,rad,3,rot)
+    # return self.__new_faces_in_ngon(x1,y1,rad,3,rot)
+    return self.__new_face_in_triangle(x1,y1,rad,rot)
 
   @cython.wraparound(False)
   @cython.boundscheck(False)

@@ -925,6 +925,47 @@ cdef class Mesh:
   @cython.wraparound(False)
   @cython.boundscheck(False)
   @cython.nonecheck(False)
+  cdef long __new_face_in_triangle(self, double x1, double y1, double rad, double angle) nogil:
+
+    cdef long i
+    cdef long *vertices = <long *>malloc(3*sizeof(long))
+    cdef long *edges = <long *>malloc(3*sizeof(long))
+
+    cdef double the = angle
+    cdef double thediff = TWOPI/3.
+    for i in xrange(3):
+
+      vertices[i] = self.__new_vertex(
+        x1 + cos(the)*rad,
+        y1 + sin(the)*rad
+      )
+      the += thediff
+
+    edges[0] = self.__new_edge(vertices[0], vertices[1])
+    edges[1] = self.__new_edge(vertices[1], vertices[2])
+    edges[2] = self.__new_edge(vertices[2], vertices[0])
+
+    self.__set_edge_of_vertex(vertices[0], edges[0])
+    self.__set_edge_of_vertex(vertices[1], edges[1])
+    self.__set_edge_of_vertex(vertices[2], edges[2])
+
+    self.__set_next_of_triangle(edges[0], edges[1], edges[2])
+
+    cdef long f = self.__new_face(edges[0])
+    self.__set_face_of_three_edges(f, edges[0], edges[1], edges[2])
+    self.__set_edge_of_face(f, edges[0])
+    self.__set_gen_of_three_edges(0, edges[0], edges[1], edges[2])
+
+    self.__set_edge_of_vertex(vertices[0], edges[0])
+
+    free(vertices)
+    free(edges)
+
+    return 1
+
+  @cython.wraparound(False)
+  @cython.boundscheck(False)
+  @cython.nonecheck(False)
   cdef long __get_connected_vertices(self, long v1, long *tmp) nogil:
 
     cdef long he1 = self.VHE[v1]

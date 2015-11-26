@@ -47,7 +47,7 @@ def show(render, dm):
   global np_gen
   global i
 
-  if i % 4 == 0:
+  if i % 5 == 0:
 
     render.clear_canvas()
 
@@ -86,7 +86,7 @@ def steps(dm):
     edges = unique(randint(henum,size=(henum)))
     en = len(edges)
     rnd = 1-2*random(en*2)
-    make_island = random(size=en)>0.7
+    make_island = random(size=en)>0.85
 
     for i,(he,isl) in enumerate(zip(edges,make_island)):
 

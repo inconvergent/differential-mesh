@@ -105,6 +105,8 @@ cdef class Mesh:
 
   cdef long __new_faces_in_ngon(self, double x1, double y1, double rad, long num, double angle) nogil
 
+  cdef long __new_face_in_triangle(self, double x1, double y1, double rad, double angle) nogil
+
   cdef long __get_connected_vertices(self, long v1, long *tmp) nogil
 
   cdef long __get_opposite_edges(self, long v1, long *tmp) nogil
