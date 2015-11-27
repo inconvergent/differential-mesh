@@ -8,10 +8,10 @@ from numpy import sqrt
 from numpy import zeros
 
 NMAX = 10e6
-SIZE = 1500
+SIZE = 520
 ONE = 1./SIZE
 
-RAD = 2*ONE
+RAD = 1.5*ONE
 H = sqrt(3.)*RAD
 NEARL = 2*RAD
 FARL = RAD*15
@@ -47,19 +47,17 @@ def show(render, dm):
   global np_gen
   global i
 
-  if i % 5 == 0:
+  render.clear_canvas()
 
-    render.clear_canvas()
+  num = dm.np_get_triangles_coordinates(np_coord)
+  render_random_triangle = render.random_triangle
 
-    num = dm.np_get_triangles_coordinates(np_coord)
-    render_random_triangle = render.random_triangle
+  for f,vv in enumerate(np_coord[:num,:]):
 
-    for f,vv in enumerate(np_coord[:num,:]):
+    render.set_front(FRONT)
+    render_random_triangle(*vv,grains=45)
 
-      render.set_front(FRONT)
-      render_random_triangle(*vv,grains=45)
-
-  #render.write_to_png('ani_{:05d}.png'.format(i))
+  # render.write_to_png('ani_{:05d}.png'.format(i))
 
   i += 1
 
