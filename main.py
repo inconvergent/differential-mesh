@@ -10,6 +10,8 @@ from numpy import cos
 from numpy import sin
 from numpy.random import random
 
+from modules.timers import named_sub_timers
+
 NMAX = 10e7
 SIZE = 5000
 ONE = 1./SIZE
@@ -69,6 +71,7 @@ def main():
   from render.render import Render
   from time import time
   from modules.helpers import print_stats
+  from numpy import array
 
 
   DM = DifferentialMesh(NMAX, 2*FARL, NEARL, FARL, PROCS)
@@ -78,37 +81,55 @@ def main():
   render = Render(SIZE, BACK, FRONT)
   render.set_line_width(LINEWIDTH)
 
+  st = named_sub_timers()
 
   tsum = 0
+
+  minimum_length = H*0.8
+  maximum_length = H*2
 
   for i in xrange(10000):
 
     t1 = time()
 
+    st.start()
     DM.optimize_position(OPT_STP)
+    st.t('opt')
 
     henum = DM.get_henum()
-    rnd = 1-2*random(henum*2)
-    for he in xrange(henum):
+    st.t('rnd')
 
-      if DM.is_surface_edge(he)>0:
+    surface_edges = array(
+      [DM.is_surface_edge(i)>0 \
+      for i in range(henum)],
+      'bool').nonzero()[0]
 
-        the = pi*rnd[2*he]
-        rad = rnd[2*he+1]*0.5
-        dx = cos(the)*rad*H
-        dy = sin(the)*rad*H
+    st.t('surf')
 
-        DM.new_triangle_from_surface_edge(
-          he,
-          H,
-          dx,
-          dy,
-          minimum_length=H*0.8,
-          maximum_length=H*2,
-          merge_ragged_edge=1
-        )
+    rnd = random(len(surface_edges)*2)
+    the = (1.-2*rnd[::2])*pi
+    rad = rnd[1::2]*0.5*H
+    dx = cos(the)*rad
+    dy = sin(the)*rad
+    st.t('rnd2')
 
+    for i,se in enumerate(surface_edges):
+
+      DM.new_triangle_from_surface_edge(
+        se,
+        H,
+        dx[i],
+        dy[i],
+        minimum_length=minimum_length,
+        maximum_length=maximum_length,
+        merge_ragged_edge=1
+      )
+      st.t('tri')
+
+    st.start()
     DM.optimize_edges(H*2, NEARL*0.5)
+    st.t('opte')
+
 
     tsum += time() - t1
 
@@ -119,6 +140,9 @@ def main():
       show(render, DM)
 
       tsum = 0
+
+    st.p()
+
 
 
 if __name__ == '__main__' :

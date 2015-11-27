@@ -592,11 +592,8 @@ cdef class DifferentialMesh(mesh.Mesh):
     cdef long first = self.HE[he1].first
     cdef long last = self.HE[he1].last
 
-    cdef double xmid = (self.X[first] + self.X[last])*0.5
-    cdef double ymid = (self.Y[first] + self.Y[last])*0.5
-
-    cdef double x1 = xmid + normal[0]*h + dx
-    cdef double y1 = ymid + normal[1]*h + dy
+    cdef double x1 = (self.X[first] + self.X[last])*0.5 + normal[0]*h + dx
+    cdef double y1 = (self.Y[first] + self.Y[last])*0.5 + normal[1]*h + dy
 
     cdef double vc = vcross(
       self.X[self.HE[he1].first], self.Y[self.HE[he1].first],
