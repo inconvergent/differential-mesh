@@ -21,6 +21,11 @@ from helpers cimport double_array_init
 from helpers cimport long_array_init
 from helpers cimport vcross
 
+import numpy as np
+cimport numpy as np
+
+
+
 cdef double TWOPI = 2.*pi
 
 
@@ -85,8 +90,8 @@ cdef class DifferentialMesh(mesh.Mesh):
     long *vertices,
     long num,
     double scale,
-    double *dxdx,
-    double *dydy
+    double *diffx,
+    double *diffy
   ) nogil:
     """
     all vertices will move away from all neighboring (closer than farl)
@@ -109,7 +114,6 @@ cdef class DifferentialMesh(mesh.Mesh):
       neigh = vertices[k]
 
       if neigh == v1:
-
         continue
 
       dx = self.X[v1]-self.X[neigh]
@@ -119,21 +123,40 @@ cdef class DifferentialMesh(mesh.Mesh):
       if nrm>self.farl or nrm<=1e-9:
         continue
 
-      dx = dx/nrm
-      dy = dy/nrm
+      s = self.farl/nrm-1.0
 
-      s = self.farl-nrm
-
-      if nrm<self.nearl:
-        s = s*2.
+      # if nrm<self.nearl:
+        # s = s*2.
 
       resx += dx*s
       resy += dy*s
 
-    dxdx[v1] += resx*scale
-    dydy[v1] += resy*scale
+    diffx[v1] += resx*scale
+    diffy[v1] += resy*scale
 
     return 1
+
+  @cython.wraparound(False)
+  @cython.boundscheck(False)
+  @cython.nonecheck(False)
+  @cython.cdivision(True)
+  cdef long __triangle(
+    self,
+    long v1,
+    double *diffx,
+    double *diffy,
+    double scale,
+    long *vertices,
+    long num
+  ) nogil:
+
+    cdef long k
+
+    for k in xrange(num):
+
+      self.__edge_vertex_force(v1, diffx, diffy, vertices[k], scale)
+
+    return num
 
   @cython.wraparound(False)
   @cython.boundscheck(False)
@@ -142,45 +165,39 @@ cdef class DifferentialMesh(mesh.Mesh):
   cdef long __edge_vertex_force(
     self,
     long v1,
-    long *opposite,
-    long num,
-    double scale,
-    double *dxdx,
-    double *dydy
+    double *diffx,
+    double *diffy,
+    long he1,
+    double scale
   ) nogil:
 
-    cdef long a
-    cdef long b
-    cdef long k
-    cdef long he
+    cdef long henum = self.henum
 
-    cdef double dx
-    cdef double dy
-    cdef double nrm
+    cdef long a = self.HE[he1].first
+    cdef long b = self.HE[he1].last
 
-    for k in xrange(num):
+    cdef double x = (self.X[b]+self.X[a])*0.5
+    cdef double y = (self.Y[b]+self.Y[a])*0.5
 
-      he = opposite[k]
+    cdef double dx = self.X[v1]-x
+    cdef double dy = self.Y[v1]-y
 
-      a = self.HE[he].first
-      b = self.HE[he].last
+    cdef double nrm = sqrt(dx*dx+dy*dy)
 
-      dx = self.X[v1]-(self.X[b]+self.X[a])*0.5
-      dy = self.Y[v1]-(self.Y[b]+self.Y[a])*0.5
-      nrm = sqrt(dx*dx+dy*dy)
+    if nrm<=0:
 
-      if nrm<=1e-9:
-        continue
+      return -1
 
-      if nrm>0.5*sqrt(3.0)*self.nearl:
+    if nrm>0.5*sqrt(3.0)*self.nearl:
 
-        dxdx[v1] -= dx/nrm*scale*0.1
-        dydy[v1] -= dy/nrm*scale*0.1
+      #pass
+      diffx[v1] += -dx/nrm*scale
+      diffy[v1] += -dy/nrm*scale
 
-      else:
+    else:
 
-        dxdx[v1] += dx/nrm*scale
-        dydy[v1] += dy/nrm*scale
+      diffx[v1] += dx/nrm*scale
+      diffy[v1] += dy/nrm*scale
 
     return 1
 
@@ -194,8 +211,8 @@ cdef class DifferentialMesh(mesh.Mesh):
     long *connected,
     long num,
     double scale,
-    double *dxdx,
-    double *dydy
+    double *diffx,
+    double *diffy
   ) nogil:
     """
     vertices will move towards all connected vertices further away than
@@ -223,15 +240,23 @@ cdef class DifferentialMesh(mesh.Mesh):
 
         ## attract
         s = scale/nrm
-        dxdx[v1] += dx*s
-        dydy[v1] += dy*s
+        diffx[v1] += dx*s
+        diffy[v1] += dy*s
 
     return 1
 
   @cython.wraparound(False)
   @cython.boundscheck(False)
   @cython.nonecheck(False)
-  cdef long __optimize_position(self, double step) nogil:
+  cdef long __optimize_position(
+    self,
+    double attract_scale,
+    double reject_scale,
+    double triangle_scale,
+    double alpha,
+    double diminish,
+    long scale_intensity
+  ) nogil:
 
     cdef long asize = self.zonemap.__get_max_sphere_count()
     cdef long *vertices
@@ -241,8 +266,12 @@ cdef class DifferentialMesh(mesh.Mesh):
     cdef long v
     cdef long i
 
-    cdef double reject_scale = 1.0
-    cdef double scale = 0.1
+    cdef double x
+    cdef double y
+    cdef double dx
+    cdef double dy
+    cdef double nrm
+    cdef double stp_limit = self.nearl*0.3
 
     with nogil, parallel(num_threads=self.procs):
 
@@ -274,29 +303,57 @@ cdef class DifferentialMesh(mesh.Mesh):
           v,
           connected,
           cnum,
-          scale,
+          attract_scale,
           self.DX,
           self.DY
         )
+        self.__smooth_intensity(
+          v,
+          alpha,
+          self.I,
+          self.DI,
+          connected,
+          cnum
+        )
 
         cnum = self.__get_opposite_edges(v, connected)
-        self.__edge_vertex_force(
+        self.__triangle(
           v,
-          connected,
-          cnum,
-          scale,
           self.DX,
-          self.DY
+          self.DY,
+          triangle_scale,
+          connected,
+          cnum
         )
 
       free(vertices)
       free(connected)
 
-    for v in range(self.vnum):
+      for v in prange(self.vnum, schedule='static'):
 
-      self.X[v] += self.DX[v]*step
-      self.Y[v] += self.DY[v]*step
-      self.zonemap.__update_v(v)
+        dx = self.DX[v]
+        dy = self.DY[v]
+
+        nrm = sqrt(dx*dx+dy*dy)
+
+        if nrm>stp_limit:
+          dx = dx / nrm * stp_limit
+          dy = dy / nrm * stp_limit
+
+        if scale_intensity>0:
+          x = self.X[v] + self.I[v]*dx
+          y = self.Y[v] + self.I[v]*dy
+        else:
+          x = self.X[v] + dx
+          y = self.Y[v] + dy
+
+        self.X[v] = x
+        self.Y[v] = y
+        self.I[v] = self.DI[v]*diminish
+
+    with nogil:
+      for v in xrange(self.vnum):
+        self.zonemap.__update_v(v)
 
     return 1
 
@@ -463,42 +520,25 @@ cdef class DifferentialMesh(mesh.Mesh):
   @cython.wraparound(False)
   @cython.boundscheck(False)
   @cython.nonecheck(False)
-  cdef long __smooth_intensity(self, double alpha) nogil:
+  @cython.cdivision(True)
+  cdef long __smooth_intensity(
+    self,
+    long v1,
+    double alpha,
+    double *old,
+    double *new,
+    long *vertices,
+    long num
+  ) nogil:
 
-    cdef long vnum = self.vnum
-    cdef long e
-    cdef long v
-    cdef long v1
-    cdef long v2
-    cdef double a
-    cdef double b
+    cdef double intens = old[v1]
 
-    newintensity = <double *>malloc(vnum*sizeof(double))
-    double_array_init(newintensity, vnum, 0.)
+    for k in xrange(num):
 
-    count = <long *>malloc(vnum*sizeof(long))
-    long_array_init(count, vnum, 0)
+      intens = intens + alpha*old[vertices[k]]
+      #new[v1] += ((b-a)*alpha + a*(1.0-alpha))/(1.0-alpha)
 
-    for e in xrange(self.henum):
-
-      v1 = self.HE[e].first
-      v2 = self.HE[e].last
-
-      a = self.I[v1]
-      b = self.I[v2]
-
-      newintensity[v1] += ((b-a)*alpha + a*(1.0-alpha))/(1.0-alpha)
-      newintensity[v2] += ((a-b)*alpha + b*(1.0-alpha))/(1.0-alpha)
-
-      count[v1] += 1
-      count[v2] += 1
-
-    for v in xrange(vnum):
-
-      self.I[v] = newintensity[v]/<double>(count[v])
-
-    free(newintensity)
-    free(count)
+    new[v1] = intens/(1.0+<double>(num*alpha))
 
     return 1
 
@@ -636,16 +676,182 @@ cdef class DifferentialMesh(mesh.Mesh):
   @cython.wraparound(False)
   @cython.boundscheck(False)
   @cython.nonecheck(False)
-  cpdef long smooth_intensity(self, double alpha):
+  @cython.cdivision(True)
+  cdef long __new_triangles_from_surface_edges(
+    self,
+    long[:] edges,
+    long num,
+    double h,
+    double[:] dx,
+    double[:] dy,
+    double minimum_length,
+    double maximum_length,
+    long merge_ragged_edge
+  ):
 
-    return self.__smooth_intensity(alpha)
+    """
+    attempts to create new triangles from edges by adding one vertex and two edges.
+
+    -- edges is the faces from which to attempt to grow a new triangle
+    -- h is the height of the new triangle
+    -- dx is noise in the x direction added to the position of the new vertex
+    -- dy is noise in the y direction added to the position of the new vertex
+    -- if merge_ragged_edge>0 we will attempt to connect the new vertex to the
+         structure by adding a one or two new edges (triangles).
+    """
+
+    cdef double *ok = <double*>malloc(num*sizeof(double))
+    cdef double *normal
+    cdef double *xys = <double*>malloc(2*num*sizeof(double))
+    cdef long he1
+    cdef long first
+    cdef long last
+    cdef long i
+
+    cdef double length
+    cdef double x1
+    cdef double y1
+
+    with nogil, parallel(num_threads=self.procs):
+    # if True:
+
+      normal = <double*>malloc(2*sizeof(double))
+      for i in prange(num, schedule='guided'):
+
+        he1 = edges[i]
+
+        if self.__is_surface_edge(he1)<0:
+          ok[i] = -1
+          # # print('surf')
+          continue
+
+        if self.__triangle_rotation(self.HE[he1].face)<0:
+          ok[i] = -1
+          # print('rot')
+          continue
+
+        if self.__get_surface_edge_outward_normal(he1, normal)<0:
+          ok[i] = -1
+          # print('normal')
+          continue
+
+        length = self.__get_edge_length(he1)
+        if length<minimum_length or length>maximum_length:
+          ok[i] = -1
+          # print('len', length, he1)
+          continue
+
+        first = self.HE[he1].first
+        last = self.HE[he1].last
+
+        x1 = (self.X[first] + self.X[last])*0.5 + normal[0]*h + dx[i]
+        y1 = (self.Y[first] + self.Y[last])*0.5 + normal[1]*h + dy[i]
+
+        if vcross(
+          self.X[self.HE[he1].first], self.Y[self.HE[he1].first],
+          self.X[self.HE[he1].last], self.Y[self.HE[he1].last],
+          x1, y1
+        )>0:
+          ok[i] = -1
+          # print('vc')
+          continue
+
+        xys[2*i] = x1
+        xys[2*i+1] = y1
+
+        ok[i] = self.zonemap.__sphere_is_free(x1, y1, h)
+        # print(ok[i] )
+
+      free(normal)
+
+    cdef long res = 0
+    cdef long v1
+    cdef long he2
+    cdef long he3
+    cdef long he4
+    cdef long f
+    cdef long k
+    cdef double sx
+    cdef double sy
+    cdef long bad
+
+    cdef long *remap= <long*>malloc(num*sizeof(long))
+
+    for i in xrange(num):
+
+      if ok[i]<0:
+        continue
+
+      he1 = edges[i]
+
+      if self.__is_surface_edge(he1)<0:
+        continue
+
+      bad = -1
+      for k in xrange(res):
+        sx = xys[2*remap[k]] - xys[2*i]
+        sy = xys[2*remap[k]+1] - xys[2*i+1]
+        if sx*sx+sy*sy<h*h:
+          bad = 1
+          break
+
+      if bad>-1:
+        continue
+
+      v1 = self.__new_vertex(xys[2*i],xys[2*i+1])
+
+      first = self.HE[he1].first
+      last = self.HE[he1].last
+
+      self.__set_vertex_intensity(v1, (self.I[self.HE[he1].first] +
+                                      self.I[self.HE[he1].last])*0.5)
+
+      he2 = self.__new_edge(last, first)
+      self.__set_mutual_twins(he2, he1)
+      he3 = self.__new_edge_from_edge(he2, v1)
+      he4 = self.__new_edge_from_edge(he3, last)
+      self.HE[he4].next = he2
+
+      self.__set_edge_of_vertex(v1,he4)
+
+      f = self.__new_face(he2)
+
+      self.__set_face_of_three_edges(f, he2, he3, he4)
+      self.__set_gen_of_three_edges(self.HE[he1].gen+1, he2, he3, he4)
+
+      if merge_ragged_edge>0:
+        self.__merge_ragged_edge(he1, he3, he4)
+
+      remap[res] = i
+      res += 1
+
+    free(remap)
+    free(xys)
+    free(ok)
+
+    return res
 
   @cython.wraparound(False)
   @cython.boundscheck(False)
   @cython.nonecheck(False)
-  cpdef long optimize_position(self, double step):
+  cpdef long optimize_position(
+    self,
+    double attract_scale,
+    double reject_scale,
+    double triangle_scale,
+    double alpha,
+    double diminish,
+    long scale_intensity
+  ):
 
-    return self.__optimize_position(step)
+    return self.__optimize_position(
+      attract_scale,
+      reject_scale,
+      triangle_scale,
+      alpha,
+      diminish,
+      scale_intensity
+    )
 
   @cython.wraparound(False)
   @cython.boundscheck(False)
@@ -684,4 +890,52 @@ cdef class DifferentialMesh(mesh.Mesh):
       maximum_length,
       merge_ragged_edge
     )
+
+  @cython.wraparound(False)
+  @cython.boundscheck(False)
+  @cython.nonecheck(False)
+  @cython.cdivision(True)
+  cpdef long new_triangles_from_surface_edges(
+    self,
+    long[:] edges,
+    long num,
+    double h,
+    double[:] dx,
+    double[:] dy,
+    double minimum_length,
+    double maximum_length,
+    long merge_ragged_edge
+  ):
+    return self.__new_triangles_from_surface_edges(
+      edges,
+      num,
+      h,
+      dx,
+      dy,
+      minimum_length,
+      maximum_length,
+      merge_ragged_edge
+    )
+
+  @cython.wraparound(False)
+  @cython.boundscheck(False)
+  @cython.nonecheck(False)
+  cpdef long position_noise(
+    self,
+    double[:,:] a,
+    long scale_intensity
+  ):
+
+    cdef long v
+    cdef double intensity = 1
+
+    for v in xrange(self.vnum):
+
+      if scale_intensity>0:
+        intensity = self.I[v]
+
+      self.X[v] += a[v,0]*intensity
+      self.Y[v] += a[v,1]*intensity
+
+    return 1
 

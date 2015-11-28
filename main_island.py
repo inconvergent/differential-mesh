@@ -8,7 +8,8 @@ from numpy import sqrt
 from numpy import zeros
 from numpy import cos
 from numpy import sin
-from numpy.random import random
+
+MID = 0.5
 
 NMAX = 10e7
 SIZE = 5000
@@ -19,17 +20,27 @@ H = sqrt(3.)*RAD
 NEARL = 2*RAD
 FARL = RAD*20
 
-OPT_STP = 1./SIZE*0.5
+STP = 1./SIZE*0.5
 
-MID = 0.5
+ATTRACT_SCALE = STP*0.1
+REJECT_SCALE = STP*0.1
+TRIANGLE_SCALE = STP*0.01
+ALPHA = 0
+DIMINISH = 0.99
+
+SPLIT_LIMIT = H*2
+FLIP_LIMIT = NEARL*0.5
+
+MAXIMUM_LENGTH = H*2
+MINIMUM_LENGTH = H*0.8
+
+STEPS_ITT = 100
+
 
 LINEWIDTH = 1*ONE
 
 BACK = [1,1,1,1]
 FRONT = [0,0,0,0.3]
-RED = [1,0,0,0.05]
-BLUE = [0,0,1,0.3]
-GREEN = [0,1,0,0.3]
 
 PROCS = 6
 
@@ -88,59 +99,66 @@ def main():
   for i in xrange(10000):
 
     t1 = time()
+    for _ in xrange(STEPS_ITT):
 
-    DM.optimize_position(OPT_STP)
+      DM.optimize_position(
+        ATTRACT_SCALE,
+        REJECT_SCALE,
+        TRIANGLE_SCALE,
+        ALPHA,
+        DIMINISH,
+        -1
+      )
 
-    henum = DM.get_henum()
+      henum = DM.get_henum()
 
-    edges = unique(randint(henum,size=(henum)))
-    en = len(edges)
-    rnd = 1-2*random(size=en*2)
-    make_island = random(size=en)>0.85
+      edges = unique(randint(henum,size=(henum)))
+      en = len(edges)
+      rnd = 1-2*random(size=en*2)
+      make_island = random(size=en)>0.85
 
-    for i,(he,isl) in enumerate(zip(edges,make_island)):
+      for i,(he,isl) in enumerate(zip(edges,make_island)):
 
-      if DM.is_surface_edge(he)>0:
+        if DM.is_surface_edge(he)>0:
 
-        the = pi*rnd[2*i]
-        rad = rnd[2*i+1]*0.5
-        dx = cos(the)*rad*H
-        dy = sin(the)*rad*H
+          the = pi*rnd[2*i]
+          rad = rnd[2*i+1]*0.5
+          dx = cos(the)*rad*H
+          dy = sin(the)*rad*H
 
-        if not isl:
+          if not isl:
 
-          DM.new_triangle_from_surface_edge(
-            he,
-            H,
-            dx*rad*H,
-            dy*rad*H,
-            minimum_length=H*0.8,
-            maximum_length=H*2,
-            merge_ragged_edge=1
-          )
+            DM.new_triangle_from_surface_edge(
+              he,
+              H,
+              dx*rad*H,
+              dy*rad*H,
+              minimum_length=MINIMUM_LENGTH,
+              maximum_length=MAXIMUM_LENGTH,
+              merge_ragged_edge=1
+            )
 
-        else:
+          else:
 
-          DM.throw_seed_triangle(
-            he,
-            H,
-            dx*rad*H,
-            dy*rad*H,
-            NEARL*0.5,
-            the
-          )
+            DM.throw_seed_triangle(
+              he,
+              H,
+              dx*rad*H,
+              dy*rad*H,
+              NEARL*0.5,
+              the
+            )
 
-    DM.optimize_edges(H*2, NEARL*0.5)
+      DM.optimize_edges(
+        SPLIT_LIMIT,
+        FLIP_LIMIT
+      )
 
-    tsum += time() - t1
+      tsum += time() - t1
 
-    if i%40==0:
-
-      print_stats(render.num_img, tsum, DM)
-
-      show(render, DM)
-
-      tsum = 0
+    print_stats(render.num_img, tsum, DM)
+    show(render, DM)
+    tsum = 0
 
 
 if __name__ == '__main__' :

@@ -25,7 +25,22 @@ H = sqrt(3.)*RAD
 NEARL = 2*RAD
 FARL = RAD*13
 
-OPT_STP = 1./SIZE
+STEPS_ITT = 100
+
+STP = 1./SIZE
+
+ATTRACT_SCALE = STP*0.1
+REJECT_SCALE = STP
+TRIANGLE_SCALE = STP*0.01
+ALPHA = 0
+DIMINISH = 0.99
+
+
+MINIMUM_LENGTH = H*0.8
+MAXIMUM_LENGTH = H*2
+
+SPLIT_LIMIT = H*2
+FLIP_LIMIT = NEARL*0.5
 
 
 BACK = [1, 1.0, 1.0, 1]
@@ -35,8 +50,6 @@ RED = [1,0,0,0.3]
 BLUE = [0,0,1,0.3]
 GREEN = [0,1,0,0.3]
 CYAN = [0,0.5,0.5,0.5]
-
-STEPS_ITT = 200
 
 NUM_SOURCES = 2500*4
 
@@ -49,12 +62,10 @@ np_coord = zeros((NMAX,6), 'float')
 np_edges_coord = zeros((NMAX,4), 'float')
 np_gen = zeros(NMAX, 'int')
 
-i = 0
 
 def show_circles(render, dm, sources):
 
   global np_coord
-  global i
   global np_gen
 
   render.clear_canvas()
@@ -93,16 +104,12 @@ def show_circles(render, dm, sources):
       ##render.set_front(rgba)
     #render_random_uniform_circle(vv[0], vv[1], dd[e], grains=30, dst=0)
 
-
-  render.write_to_png('res/ello_circ_i_{:05d}.png'.format(i))
-
-  i += 1
+  render.write_to_png('res/ello_circ_i_{:05d}.png'.format(render.num_img))
 
 
 def show_triangles(render, dm, sources):
 
   global np_coord
-  global i
 
   render.clear_canvas()
 
@@ -131,20 +138,15 @@ def show_triangles(render, dm, sources):
 
   render.write_to_png('res/expand_c_{:05d}.png'.format(i))
 
-  i += 1
-
 
 def main():
 
+  from time import time
   from render.render import Render
   from differentialMesh import DifferentialMesh
   from modules.helpers import darts
   from modules.helpers import print_stats
-
-  from time import time
-
-  from numpy import unique
-  from numpy.random import randint
+  from numpy import array
 
 
   DM = DifferentialMesh(NMAX, 2*FARL, NEARL, FARL, PROCS)
@@ -161,43 +163,49 @@ def main():
   for i in xrange(1000000):
 
     t1 = time()
-    for i in xrange(STEPS_ITT):
+    for _ in xrange(STEPS_ITT):
 
       DM.find_nearby_sources()
 
       henum = DM.get_henum()
 
-      rnd = 1-2*random(henum*2)
-      for he in unique(randint(henum,size=(henum))):
+      surface_edges = array(
+        [DM.is_surface_edge(e)>0 and r<DM.get_edge_intensity(e)
+        for e,r in enumerate(random(size=henum))],
+        'bool').nonzero()[0]
 
-        intensity = DM.get_edge_intensity(he)
+      rnd = random(size=len(surface_edges)*2)
+      the = (1.-2*rnd[::2])*pi
+      rad = rnd[1::2]*0.5*H
+      dx = cos(the)*rad
+      dy = sin(the)*rad
 
-        if random()<intensity and DM.is_surface_edge(he)>-1:
+      DM.new_triangles_from_surface_edges(
+        surface_edges,
+        len(surface_edges),
+        H,
+        dx,
+        dy,
+        MINIMUM_LENGTH,
+        MAXIMUM_LENGTH,
+        1
+      )
 
-          the = pi*rnd[2*he]
-          rad = rnd[2*he+1]*0.5
-          dx = cos(the)*rad*H
-          dy = sin(the)*rad*H
-
-          DM.new_triangle_from_surface_edge(
-            he,
-            H,
-            dx,
-            dy,
-            minimum_length=0,
-            maximum_length=H*2,
-            merge_ragged_edge=1
-          )
-
-      DM.diminish_all_vertex_intensity(0.99)
-
-      DM.smooth_intensity(0.05)
-
-      DM.optimize_position(OPT_STP)
+      DM.optimize_position(
+        ATTRACT_SCALE,
+        REJECT_SCALE,
+        TRIANGLE_SCALE,
+        ALPHA,
+        DIMINISH,
+        -1
+      )
 
       henum = DM.get_henum()
 
-      DM.optimize_edges(2.0*H, NEARL*0.5)
+      DM.optimize_edges(
+        SPLIT_LIMIT,
+        FLIP_LIMIT
+      )
 
       if DM.safe_vertex_positions(3*H)<0:
 
@@ -208,7 +216,7 @@ def main():
     show_circles(render, DM, sources)
 
     t2 = time()
-    print_stats(render.num_img*STEPS_ITT, t2-t1, DM)
+    print_stats(i*STEPS_ITT, t2-t1, DM)
 
 
 if __name__ == '__main__' :

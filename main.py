@@ -25,13 +25,27 @@ OPT_STP = 1./SIZE*0.5
 
 MID = 0.5
 
+STEPS_ITT = 100
+
 LINEWIDTH = 1*ONE
+
+STP = 1./SIZE*0.5
+
+ATTRACT_SCALE = STP*0.1
+REJECT_SCALE = STP
+TRIANGLE_SCALE = STP*0.01
+ALPHA = 0
+DIMINISH = 0.99
+
+
+MINIMUM_LENGTH = H*0.8
+MAXIMUM_LENGTH = H*2
+
+SPLIT_LIMIT = H*2
+FLIP_LIMIT = NEARL*0.5
 
 BACK = [1,1,1,1]
 FRONT = [0,0,0,0.3]
-RED = [1,0,0,0.05]
-BLUE = [0,0,1,0.3]
-GREEN = [0,1,0,0.3]
 
 PROCS = 6
 
@@ -40,17 +54,13 @@ TWOPI = pi*2.
 
 np_coord = zeros((NMAX,6), 'float')
 
-i = 0
-
 
 def show(render, dm):
 
   global np_coord
-  global i
 
   render.clear_canvas()
 
-  #num = dm.np_get_triangles_coordinates(np_coord)
   num = dm.np_get_triangles_coordinates(np_coord)
   render_random_triangle = render.random_triangle
   rgba = FRONT
@@ -60,9 +70,7 @@ def show(render, dm):
 
     render_random_triangle(*vv,grains=80)
 
-  render.write_to_png('res/res_a_{:05d}.png'.format(i))
-
-  i += 1
+  render.write_to_png('res/res_a_{:05d}.png'.format(render.num_img))
 
 
 def main():
@@ -81,67 +89,69 @@ def main():
   render = Render(SIZE, BACK, FRONT)
   render.set_line_width(LINEWIDTH)
 
-  st = named_sub_timers()
+  # st = named_sub_timers()
 
   tsum = 0
 
-  minimum_length = H*0.8
-  maximum_length = H*2
 
-  for i in xrange(10000):
+  for i in xrange(10000000):
 
     t1 = time()
+    for _ in xrange(STEPS_ITT):
 
-    st.start()
-    DM.optimize_position(OPT_STP)
-    st.t('opt')
-
-    henum = DM.get_henum()
-    st.t('rnd')
-
-    surface_edges = array(
-      [DM.is_surface_edge(i)>0 \
-      for i in range(henum)],
-      'bool').nonzero()[0]
-
-    st.t('surf')
-
-    rnd = random(len(surface_edges)*2)
-    the = (1.-2*rnd[::2])*pi
-    rad = rnd[1::2]*0.5*H
-    dx = cos(the)*rad
-    dy = sin(the)*rad
-    st.t('rnd2')
-
-    for i,se in enumerate(surface_edges):
-
-      DM.new_triangle_from_surface_edge(
-        se,
-        H,
-        dx[i],
-        dy[i],
-        minimum_length=minimum_length,
-        maximum_length=maximum_length,
-        merge_ragged_edge=1
+      # st.start()
+      DM.optimize_position(
+        ATTRACT_SCALE,
+        REJECT_SCALE,
+        TRIANGLE_SCALE,
+        ALPHA,
+        DIMINISH,
+        -1
       )
-      st.t('tri')
+      # st.t('opt')
 
-    st.start()
-    DM.optimize_edges(H*2, NEARL*0.5)
-    st.t('opte')
+      henum = DM.get_henum()
+      # st.t('rnd')
 
+      surface_edges = array(
+        [DM.is_surface_edge(e)>0
+        for e in range(henum)],
+        'bool').nonzero()[0]
 
-    tsum += time() - t1
+      # st.t('surf')
 
-    if i%40==0:
+      rnd = random(size=len(surface_edges)*2)
+      the = (1.-2*rnd[::2])*pi
+      rad = rnd[1::2]*0.5*H
+      dx = cos(the)*rad
+      dy = sin(the)*rad
+      # st.t('rnd2')
 
-      print_stats(render.num_img, tsum, DM)
+      DM.new_triangles_from_surface_edges(
+        surface_edges,
+        len(surface_edges),
+        H,
+        dx,
+        dy,
+        MINIMUM_LENGTH,
+        MAXIMUM_LENGTH,
+        1
+      )
+      # st.t('tri')
 
-      show(render, DM)
+      # st.start()
+      DM.optimize_edges(
+        SPLIT_LIMIT,
+        FLIP_LIMIT
+      )
+      # st.t('opte')
 
-      tsum = 0
+      tsum += time() - t1
 
-    st.p()
+    print_stats(i*STEPS_ITT, tsum, DM)
+    show(render, DM)
+    tsum = 0
+    # st.p()
 
 
 

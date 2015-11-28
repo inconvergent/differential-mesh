@@ -96,6 +96,9 @@ cdef class Mesh:
     self.I = <double *>malloc(nmax*sizeof(double))
     double_array_init(self.I,nmax,0.)
 
+    self.DI = <double *>malloc(nmax*sizeof(double))
+    double_array_init(self.I,nmax,0.)
+
     self.HE = <sHE *>malloc(nmax*sizeof(sHE))
 
     self.VHE = <long *>malloc(nmax*sizeof(long))
@@ -113,6 +116,10 @@ cdef class Mesh:
     free(self.Y)
 
     free(self.HE)
+
+    free(self.I)
+
+    free(self.DI)
 
     free(self.VHE)
 
@@ -1188,7 +1195,7 @@ cdef class Mesh:
   @cython.wraparound(False)
   @cython.boundscheck(False)
   @cython.nonecheck(False)
-  cpdef long np_get_edges_coordinates(self, np.ndarray[double, mode="c",ndim=2] a):
+  cpdef long np_get_edges_coordinates(self, double[:,:] a):
     """
     assigns edges coordinates x1,y1,x2,y2 to a.
     returns number of coordinates
@@ -1215,7 +1222,7 @@ cdef class Mesh:
   @cython.wraparound(False)
   @cython.boundscheck(False)
   @cython.nonecheck(False)
-  cpdef long np_get_internal_edges_coordinates(self, np.ndarray[double, mode="c",ndim=2] a):
+  cpdef long np_get_internal_edges_coordinates(self, double[:,:] a):
     """
     assigns edges coordinates x1,y1,x2,y2 to a.
     returns number of coordinates
@@ -1249,7 +1256,7 @@ cdef class Mesh:
   @cython.wraparound(False)
   @cython.boundscheck(False)
   @cython.nonecheck(False)
-  cpdef long np_get_triangles_coordinates(self, np.ndarray[double, mode="c",ndim=2] a):
+  cpdef long np_get_triangles_coordinates(self, double[:,:] a):
     """
     assigns triangle coordinates x1,y1,x2,y2,x3,y3 to a.
     returns number of coordinates
@@ -1287,7 +1294,7 @@ cdef class Mesh:
   @cython.wraparound(False)
   @cython.boundscheck(False)
   @cython.nonecheck(False)
-  cpdef long np_get_triangles_gen(self, np.ndarray[long, mode="c",ndim=1] a):
+  cpdef long np_get_triangles_gen(self, long[:] a):
     """
     assigns triangle generations to a
     returns number of triangles
@@ -1303,7 +1310,7 @@ cdef class Mesh:
   @cython.wraparound(False)
   @cython.boundscheck(False)
   @cython.nonecheck(False)
-  cpdef long np_get_edges_gen(self, np.ndarray[long, mode="c",ndim=1] a):
+  cpdef long np_get_edges_gen(self, long[:] a):
     """
     assigns edge generations to a
     returns number of edges
@@ -1319,7 +1326,7 @@ cdef class Mesh:
   @cython.wraparound(False)
   @cython.boundscheck(False)
   @cython.nonecheck(False)
-  cpdef long np_get_edges_gen_diff(self, np.ndarray[long, mode="c",ndim=1] a):
+  cpdef long np_get_edges_gen_diff(self, long[:] a):
     """
     """
 
@@ -1356,6 +1363,19 @@ cdef class Mesh:
     self.__set_vertex_intensity(v1, i)
 
     return 1
+
+  @cython.wraparound(False)
+  @cython.boundscheck(False)
+  @cython.nonecheck(False)
+  cpdef long set_vertices_intensity(self, long[:] a, double i):
+
+    cdef long v1
+
+    for v1 in a:
+      self.__set_vertex_intensity(v1, i)
+
+    return 1
+
 
   @cython.wraparound(False)
   @cython.boundscheck(False)
@@ -1467,21 +1487,6 @@ cdef class Mesh:
     nn[1] = dy/length
 
     return 1
-
-  @cython.wraparound(False)
-  @cython.boundscheck(False)
-  @cython.nonecheck(False)
-  cpdef long diminish_all_vertex_intensity(self, double d):
-
-    cdef long v
-
-    for v in xrange(self.vnum):
-
-      self.I[v] *= d
-
-
-    return 1
-
 
   @cython.wraparound(False)
   @cython.boundscheck(False)

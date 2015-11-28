@@ -33,6 +33,7 @@ cdef class Mesh:
   cdef double *X
   cdef double *Y
   cdef double *I
+  cdef double *DI
   cdef sHE *HE
   cdef long *VHE
   cdef long *FHE
@@ -99,6 +100,8 @@ cdef class Mesh:
 
   cdef void __set_vertex_intensity(self, long v1, double i) nogil
 
+  cpdef long set_vertices_intensity(self, long[:], double i)
+
   cdef void __set_edge_intensity(self, long he1, double i) nogil
 
   cdef void __add_edge_intensity(self, long he1, double i) nogil
@@ -135,17 +138,17 @@ cdef class Mesh:
 
   ## GET DATA
 
-  cpdef long np_get_triangles_coordinates(self, np.ndarray[double, mode="c",ndim=2] a)
+  cpdef long np_get_triangles_coordinates(self, double[:,:] a)
 
-  cpdef long np_get_edges_coordinates(self, np.ndarray[double, mode="c",ndim=2] a)
+  cpdef long np_get_edges_coordinates(self, double[:,:] a)
 
-  cpdef long np_get_internal_edges_coordinates(self, np.ndarray[double, mode="c",ndim=2] a)
+  cpdef long np_get_internal_edges_coordinates(self, double[:,:] a)
 
-  cpdef long np_get_triangles_gen(self, np.ndarray[long, mode="c",ndim=1] a)
+  cpdef long np_get_triangles_gen(self, long[:] a)
 
-  cpdef long np_get_edges_gen(self, np.ndarray[long, mode="c",ndim=1] a)
+  cpdef long np_get_edges_gen(self, long[:] a)
 
-  cpdef long np_get_edges_gen_diff(self, np.ndarray[long, mode="c",ndim=1] a)
+  cpdef long np_get_edges_gen_diff(self, long[:] a)
 
   cpdef double get_edge_intensity(self, long he1)
 
@@ -160,8 +163,6 @@ cdef class Mesh:
   cpdef list get_triangle_edges(self, long f1)
 
   ## INFO
-
-  cpdef long diminish_all_vertex_intensity(self, double d)
 
   cpdef long is_surface_edge(self, long t1)
 

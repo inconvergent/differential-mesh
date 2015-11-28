@@ -16,7 +16,19 @@ H = sqrt(3.)*RAD
 NEARL = 2*RAD
 FARL = RAD*15
 
-OPT_STP = 1./SIZE
+STP = 1./SIZE*0.5
+
+ATTRACT_SCALE = STP*0.1
+REJECT_SCALE = STP*0.1
+TRIANGLE_SCALE = STP*0.01
+ALPHA = 0
+DIMINISH = 0.99
+
+SPLIT_LIMIT = H*2
+FLIP_LIMIT = NEARL*0.5
+
+MAXIMUM_LENGTH = H*2
+MINIMUM_LENGTH = H*0.8
 
 MID = 0.5
 
@@ -24,9 +36,6 @@ LINEWIDTH = ONE*1.5
 
 BACK = [1,1,1,1]
 FRONT = [0,0,0,0.3]
-RED = [1,0,0,0.05]
-BLUE = [0,0,1,0.3]
-GREEN = [0,1,0,0.3]
 
 STEPS_ITT = 1
 
@@ -77,7 +86,14 @@ def steps(dm):
   t1 = time()
   for i in xrange(STEPS_ITT):
 
-    dm.optimize_position(OPT_STP)
+    dm.optimize_position(
+      ATTRACT_SCALE,
+      REJECT_SCALE,
+      TRIANGLE_SCALE,
+      ALPHA,
+      DIMINISH,
+      -1
+    )
 
     henum = dm.get_henum()
 
@@ -102,8 +118,8 @@ def steps(dm):
             H,
             dx*rad*H,
             dy*rad*H,
-            minimum_length=H*0.8,
-            maximum_length=H*2,
+            minimum_length=MINIMUM_LENGTH,
+            maximum_length=MAXIMUM_LENGTH,
             merge_ragged_edge=1
           )
 
@@ -118,7 +134,10 @@ def steps(dm):
             the
           )
 
-    dm.optimize_edges(2.0*H, NEARL*0.5)
+    dm.optimize_edges(
+      SPLIT_LIMIT,
+      FLIP_LIMIT
+    )
 
     if dm.safe_vertex_positions(3*H)<0:
 
