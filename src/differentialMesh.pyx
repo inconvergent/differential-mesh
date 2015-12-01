@@ -492,28 +492,52 @@ cdef class DifferentialMesh(mesh.Mesh):
 
     cdef long v
     cdef long n
-    cdef double rad = self.source_rad
-    cdef long vnum = self.vnum
-
-    cdef long asize = self.source_zonemap.__get_max_sphere_count()
+    cdef long d
     cdef long *vertices
 
     cdef long num
+    cdef long asize = self.source_zonemap.__get_max_sphere_count()
+
+    to_delete = <long *>malloc(asize*self.vnum*sizeof(long))
+    counts = <long *>malloc(self.vnum*sizeof(long))
+    deleted = <long *>malloc(self.num_sources*sizeof(long))
+
+    long_array_init(deleted, self.num_sources, -1)
 
     cdef long hits = 0
 
-    vertices = <long *>malloc(asize*sizeof(long))
+    with nogil, parallel(num_threads=self.procs):
 
-    for v in xrange(vnum):
+      vertices = <long *>malloc(asize*sizeof(long))
 
-      num = self.source_zonemap.__sphere_vertices(self.X[v], self.Y[v], rad, vertices)
+      for v in prange(self.vnum, schedule='guided'):
 
-      for n in xrange(num):
+        num = self.source_zonemap.__sphere_vertices(
+          self.X[v],
+          self.Y[v],
+          self.source_rad,
+          vertices
+        )
 
-        self.source_zonemap.__del_vertex(vertices[n])
-        self.__set_vertex_intensity(v, 1.0)
+        counts[v] = num
 
-        hits += 1
+        if num>0:
+          self.__set_vertex_intensity(v, 1.0)
+          for n in xrange(num):
+            to_delete[v*asize+n] = vertices[n]
+          hits += num
+
+      free(vertices)
+
+    for v in xrange(self.vnum):
+      for n in xrange(counts[v]):
+        d = to_delete[v*asize+n]
+        if deleted[d]<1:
+          deleted[d] = 1
+          self.source_zonemap.__del_vertex(d)
+
+    free(to_delete)
+    free(counts)
 
     return hits
 
