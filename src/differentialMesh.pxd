@@ -110,7 +110,7 @@ cdef class DifferentialMesh(mesh.Mesh):
 
   cdef long __merge_ragged_edge(self, long he1, long he3, long he4) nogil
 
-  cdef long __find_nearby_sources(self) nogil
+  cdef long __find_nearby_sources(self, long hit_limit)
 
   cdef long __smooth_intensity(
     self,
@@ -126,7 +126,7 @@ cdef class DifferentialMesh(mesh.Mesh):
 
   cpdef long initialize_sources(self, list sources, double source_rad)
 
-  cpdef long find_nearby_sources(self)
+  cpdef long find_nearby_sources(self, long hit_limit=*)
 
   cpdef long optimize_position(
     self,

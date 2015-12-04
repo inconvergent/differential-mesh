@@ -386,9 +386,9 @@ cdef class DifferentialMesh(mesh.Mesh):
   @cython.wraparound(False)
   @cython.boundscheck(False)
   @cython.nonecheck(False)
-  cpdef long find_nearby_sources(self):
+  cpdef long find_nearby_sources(self, long hit_limit=10):
 
-    return self.__find_nearby_sources()
+    return self.__find_nearby_sources(hit_limit)
 
 
   @cython.wraparound(False)
@@ -488,27 +488,24 @@ cdef class DifferentialMesh(mesh.Mesh):
   @cython.wraparound(False)
   @cython.boundscheck(False)
   @cython.nonecheck(False)
-  cdef long __find_nearby_sources(self) nogil:
+  cdef long __find_nearby_sources(self, long hit_limit):
 
     cdef long v
     cdef long n
     cdef long d
-    cdef long *vertices
+    cdef long *sources
 
     cdef long num
-    cdef long asize = self.source_zonemap.__get_max_sphere_count()
 
-    to_delete = <long *>malloc(asize*self.vnum*sizeof(long))
+    to_delete = <long *>malloc(hit_limit*self.vnum*sizeof(long))
+    long_array_init(to_delete, hit_limit*self.vnum, -1)
     counts = <long *>malloc(self.vnum*sizeof(long))
-    deleted = <long *>malloc(self.num_sources*sizeof(long))
-
-    long_array_init(deleted, self.num_sources, -1)
 
     cdef long hits = 0
 
     with nogil, parallel(num_threads=self.procs):
 
-      vertices = <long *>malloc(asize*sizeof(long))
+      sources = <long *>malloc(hit_limit*sizeof(long))
 
       for v in prange(self.vnum, schedule='guided'):
 
@@ -516,25 +513,33 @@ cdef class DifferentialMesh(mesh.Mesh):
           self.X[v],
           self.Y[v],
           self.source_rad,
-          vertices
+          sources
         )
 
         counts[v] = num
 
         if num>0:
+          # print(num)
           self.__set_vertex_intensity(v, 1.0)
           for n in xrange(num):
-            to_delete[v*asize+n] = vertices[n]
+            to_delete[v*hit_limit+n] = sources[n]
           hits += num
 
-      free(vertices)
+      # print(hits)
+
+      free(sources)
+
+    cdef set deleted = set()
 
     for v in xrange(self.vnum):
       for n in xrange(counts[v]):
-        d = to_delete[v*asize+n]
-        if deleted[d]<1:
-          deleted[d] = 1
+        d = to_delete[v*hit_limit+n]
+
+        if not d in deleted:
           self.source_zonemap.__del_vertex(d)
+          deleted.add(d)
+
+    # print(deleted)
 
     free(to_delete)
     free(counts)
