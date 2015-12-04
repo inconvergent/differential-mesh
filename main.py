@@ -31,9 +31,9 @@ LINEWIDTH = 1*ONE
 
 STP = 1./SIZE*0.5
 
-ATTRACT_SCALE = STP*0.1
-REJECT_SCALE = STP
-TRIANGLE_SCALE = STP*0.01
+ATTRACT_STP = STP*0.1
+REJECT_STP = STP
+TRIANGLE_STP = STP*0.01
 ALPHA = 0
 DIMINISH = 0.99
 
@@ -48,6 +48,8 @@ BACK = [1,1,1,1]
 FRONT = [0,0,0,0.3]
 
 PROCS = 6
+
+PREFIX = './res/exp_a'
 
 
 TWOPI = pi*2.
@@ -80,6 +82,7 @@ def main():
   from time import time
   from modules.helpers import print_stats
   from numpy import array
+  # from modules.utils import get_exporter
 
 
   DM = DifferentialMesh(NMAX, 2*FARL, NEARL, FARL, PROCS)
@@ -88,6 +91,8 @@ def main():
 
   render = Render(SIZE, BACK, FRONT)
   render.set_line_width(LINEWIDTH)
+
+  # exporter = get_exporter(NMAX)
 
   # st = named_sub_timers()
 
@@ -101,9 +106,9 @@ def main():
 
       # st.start()
       DM.optimize_position(
-        ATTRACT_SCALE,
-        REJECT_SCALE,
-        TRIANGLE_SCALE,
+        ATTRACT_STP,
+        REJECT_STP,
+        TRIANGLE_STP,
         ALPHA,
         DIMINISH,
         -1
@@ -150,6 +155,20 @@ def main():
 
     print_stats(i*STEPS_ITT, tsum, DM)
     show(render, DM)
+    # exporter(
+      # DM, 
+      # {
+        # 'procs': PROCS,
+        # 'nearl': NEARL,
+        # 'farl': FARL,
+        # 'prefix': PREFIX,
+        # 'reject_stp': 0,
+        # 'attract_stp': 0,
+        # 'triangle_stp': 0,
+        # 'size': SIZE
+      # }, 
+      # i*STEPS_ITT
+    # )
     tsum = 0
     # st.p()
 

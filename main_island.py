@@ -22,9 +22,9 @@ FARL = RAD*20
 
 STP = 1./SIZE*0.5
 
-ATTRACT_SCALE = STP*0.1
-REJECT_SCALE = STP*0.1
-TRIANGLE_SCALE = STP*0.01
+ATTRACT_STP = STP*0.1
+REJECT_STP = STP*0.1
+TRIANGLE_STP = STP*0.01
 ALPHA = 0
 DIMINISH = 0.99
 
@@ -102,9 +102,9 @@ def main():
     for _ in xrange(STEPS_ITT):
 
       DM.optimize_position(
-        ATTRACT_SCALE,
-        REJECT_SCALE,
-        TRIANGLE_SCALE,
+        ATTRACT_STP,
+        REJECT_STP,
+        TRIANGLE_STP,
         ALPHA,
         DIMINISH,
         -1

@@ -1195,6 +1195,50 @@ cdef class Mesh:
   @cython.wraparound(False)
   @cython.boundscheck(False)
   @cython.nonecheck(False)
+  cpdef long np_get_vertices(self, double[:,:] a):
+    """
+    """
+
+    cdef long v
+    for v in xrange(self.vnum):
+
+      a[v, 0] = self.X[v]
+      a[v, 1] = self.Y[v]
+
+    return self.vnum
+
+  @cython.wraparound(False)
+  @cython.boundscheck(False)
+  @cython.nonecheck(False)
+  cpdef long np_get_triangles_vertices(self, long[:,:] a):
+
+    cdef long* vertices = [-1,-1,-1]
+    cdef long next
+
+    cdef sHE he
+    cdef long f
+    for f in xrange(self.fnum):
+
+      he = self.HE[self.FHE[f]]
+      next = he.next
+      vertices[0] = he.first
+
+      he = self.HE[next]
+      next = he.next
+      vertices[1] = he.first
+
+      he = self.HE[next]
+      vertices[2] = he.first
+
+      a[f, 0] = vertices[0]
+      a[f, 1] = vertices[1]
+      a[f, 2] = vertices[2]
+
+    return self.fnum
+
+  @cython.wraparound(False)
+  @cython.boundscheck(False)
+  @cython.nonecheck(False)
   cpdef long np_get_edges_coordinates(self, double[:,:] a):
     """
     assigns edges coordinates x1,y1,x2,y2 to a.

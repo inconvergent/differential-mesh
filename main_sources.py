@@ -29,9 +29,9 @@ STEPS_ITT = 100
 
 STP = 1./SIZE
 
-ATTRACT_SCALE = STP*0.1
-REJECT_SCALE = STP
-TRIANGLE_SCALE = STP*0.01
+ATTRACT_STP = STP*0.1
+REJECT_STP = STP
+TRIANGLE_STP = STP*0.01
 ALPHA = 0
 DIMINISH = 0.99
 
@@ -192,9 +192,9 @@ def main():
       )
 
       DM.optimize_position(
-        ATTRACT_SCALE,
-        REJECT_SCALE,
-        TRIANGLE_SCALE,
+        ATTRACT_STP,
+        REJECT_STP,
+        TRIANGLE_STP,
         ALPHA,
         DIMINISH,
         -1

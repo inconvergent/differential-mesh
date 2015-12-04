@@ -139,6 +139,10 @@ cdef class Mesh:
   ## GET DATA
 
   cpdef long np_get_triangles_coordinates(self, double[:,:] a)
+  
+  cpdef long np_get_vertices(self, double[:,:] a)
+
+  cpdef long np_get_triangles_vertices(self, long[:,:] a)
 
   cpdef long np_get_edges_coordinates(self, double[:,:] a)
 
