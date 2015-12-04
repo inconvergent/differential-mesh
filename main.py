@@ -72,7 +72,7 @@ def show(render, dm):
 
     render_random_triangle(*vv,grains=80)
 
-  render.write_to_png('res/res_a_{:05d}.png'.format(render.num_img))
+  render.write_to_png('{:s}_{:05d}.png'.format(PREFIX,render.num_img))
 
 
 def main():
@@ -82,8 +82,9 @@ def main():
   from time import time
   from modules.helpers import print_stats
   from numpy import array
-  # from modules.utils import get_exporter
 
+  # from modules.utils import get_exporter
+  # exporter = get_exporter(NMAX)
 
   DM = DifferentialMesh(NMAX, 2*FARL, NEARL, FARL, PROCS)
 
@@ -92,7 +93,6 @@ def main():
   render = Render(SIZE, BACK, FRONT)
   render.set_line_width(LINEWIDTH)
 
-  # exporter = get_exporter(NMAX)
 
   # st = named_sub_timers()
 
@@ -154,7 +154,11 @@ def main():
       tsum += time() - t1
 
     print_stats(i*STEPS_ITT, tsum, DM)
+
+    ## export png
     show(render, DM)
+
+    ## export obj
     # exporter(
       # DM, 
       # {
