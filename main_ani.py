@@ -1,7 +1,7 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function
+
 
 from numpy import pi
 from numpy import sqrt
@@ -142,10 +142,8 @@ def steps(dm):
 
 def main():
 
-  import gtk
-
   from differentialMesh import DifferentialMesh
-  from render.render import Animate
+  from iutils.render import Animate
 
   DM = DifferentialMesh(NMAX, 2*FARL, NEARL, FARL, PROCS)
 
@@ -163,8 +161,8 @@ def main():
   render = Animate(SIZE, BACK, FRONT, wrap)
   # render.get_colors_from_file('../colors/red_earth.gif')
   render.set_line_width(LINEWIDTH)
+  render.start()
 
-  gtk.main()
 
 
 if __name__ == '__main__' :

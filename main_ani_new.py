@@ -1,7 +1,7 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function
+
 
 from numpy import pi
 from numpy import sqrt
@@ -146,7 +146,7 @@ def main():
   import gtk
 
   from differentialMesh import DifferentialMesh
-  from render.render import Animate
+  from iutils.render import Animate
 
   DM = DifferentialMesh(NMAX, 2*FARL, NEARL, FARL, PROCS)
 
