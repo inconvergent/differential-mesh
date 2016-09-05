@@ -55,12 +55,7 @@ def get_exporter(nmax):
 
   t0 = time()
 
-  def f(dm, data, itt, final=False):
-
-    if final:
-      fn = '{:s}_final.2obj'.format(data['prefix'])
-    else:
-      fn = '{:s}_{:010d}.2obj'.format(data['prefix'],itt)
+  def f(dm, fn, data, itt, final=False):
 
     vnum = dm.np_get_vertices(verts)
     tnum = dm.np_get_triangles_vertices(tris)

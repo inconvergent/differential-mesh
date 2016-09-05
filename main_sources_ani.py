@@ -11,7 +11,7 @@ from numpy import sin
 from numpy.random import random
 
 NMAX = 10e7
-SIZE = 800
+SIZE = 1000
 ONE = 1./SIZE
 
 RAD = 2*ONE
@@ -124,7 +124,7 @@ def steps(dm):
     TRIANGLE_STP,
     ALPHA,
     DIMINISH,
-    -1
+    1
   )
 
   henum = dm.get_henum()

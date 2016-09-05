@@ -10,10 +10,12 @@ from numpy import cos
 from numpy import sin
 from numpy.random import random
 
+from fn.fn import Fn
+
 from modules.timers import named_sub_timers
 
 NMAX = 10e7
-SIZE = 5000
+SIZE = 2000
 ONE = 1./SIZE
 
 RAD = 3*ONE
@@ -25,7 +27,7 @@ OPT_STP = 1./SIZE*0.5
 
 MID = 0.5
 
-STEPS_ITT = 100
+STEPS_ITT = 10
 
 LINEWIDTH = 1*ONE
 
@@ -49,15 +51,13 @@ FRONT = [0,0,0,0.3]
 
 PROCS = 6
 
-PREFIX = './res/exp_a'
-
 
 TWOPI = pi*2.
 
 np_coord = zeros((NMAX,6), 'float')
 
 
-def show(render, dm):
+def show(render, dm, fn):
 
   global np_coord
 
@@ -65,14 +65,16 @@ def show(render, dm):
 
   num = dm.np_get_triangles_coordinates(np_coord)
   render_random_triangle = render.random_triangle
+  render_triangle = render.triangle
   rgba = FRONT
   render.set_front(rgba)
 
   for e,vv in enumerate(np_coord[:num,:]):
 
-    render_random_triangle(*vv,grains=80)
+    # render_random_triangle(*vv,grains=80)
+    render_triangle(*vv)
 
-  render.write_to_png('{:s}_{:05d}.png'.format(PREFIX,render.num_img))
+  render.write_to_png(fn)
 
 
 def main():
@@ -83,8 +85,8 @@ def main():
   from modules.helpers import print_stats
   from numpy import array
 
-  # from modules.utils import get_exporter
-  # exporter = get_exporter(NMAX)
+  from modules.utils import get_exporter
+  exporter = get_exporter(NMAX)
 
   DM = DifferentialMesh(NMAX, 2*FARL, NEARL, FARL, PROCS)
 
@@ -92,6 +94,8 @@ def main():
 
   render = Render(SIZE, BACK, FRONT)
   render.set_line_width(LINEWIDTH)
+
+  fn = Fn(prefix='./res/')
 
 
   # st = named_sub_timers()
@@ -154,25 +158,26 @@ def main():
       tsum += time() - t1
 
     print_stats(i*STEPS_ITT, tsum, DM)
+    name = fn.name()
 
     ## export png
-    show(render, DM)
+    show(render, DM, name+'.png')
 
     ## export obj
-    # exporter(
-      # DM, 
-      # {
-        # 'procs': PROCS,
-        # 'nearl': NEARL,
-        # 'farl': FARL,
-        # 'prefix': PREFIX,
-        # 'reject_stp': 0,
-        # 'attract_stp': 0,
-        # 'triangle_stp': 0,
-        # 'size': SIZE
-      # }, 
-      # i*STEPS_ITT
-    # )
+    exporter(
+      DM,
+      name + '.2obj',
+      {
+        'procs': PROCS,
+        'nearl': NEARL,
+        'farl': FARL,
+        'reject_stp': 0,
+        'attract_stp': 0,
+        'triangle_stp': 0,
+        'size': SIZE
+      },
+      i*STEPS_ITT
+    )
     tsum = 0
     # st.p()
 
