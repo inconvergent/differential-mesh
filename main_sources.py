@@ -1,7 +1,7 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function
+
 
 from numpy import pi
 from numpy import sqrt
@@ -142,7 +142,7 @@ def show_triangles(render, dm, sources):
 def main():
 
   from time import time
-  from render.render import Render
+  from iutils.render import Render
   from differentialMesh import DifferentialMesh
   from modules.helpers import darts
   from modules.helpers import print_stats
@@ -160,10 +160,10 @@ def main():
   render = Render(SIZE, BACK, FRONT)
 
 
-  for i in xrange(1000000):
+  for i in range(1000000):
 
     t1 = time()
-    for _ in xrange(STEPS_ITT):
+    for _ in range(STEPS_ITT):
 
       DM.find_nearby_sources()
 

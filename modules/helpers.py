@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function
+
 
 def random_points_in_circle(n,xx,yy,rr):
   """
@@ -46,7 +46,7 @@ def darts(n, xx, yy, rr, dst):
   ## remove new nodes that are too close to other
   ## new nodes
   dists = cdist(dartsxy,dartsxy,'euclidean')
-  for j in xrange(n-1):
+  for j in range(n-1):
     if all( dists[j,j+1:] > dst ):
       jj.append(j)
 

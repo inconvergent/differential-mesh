@@ -5,7 +5,7 @@ def get_surface_vertices(dm):
 
   res = []
 
-  for he in xrange(dm.get_henum()):
+  for he in range(dm.get_henum()):
     e = dm.is_surface_edge(he)
     if e>0:
       d = dm.get_edge_dict(he)
@@ -46,7 +46,7 @@ def get_seed_selector(dm, t, sr):
 
 def get_exporter(nmax):
 
-  from dddUtils.ioOBJ import export_2d as export_obj
+  from iutils.ioOBJ import export_2d as export_obj
   from time import time
   from numpy import zeros
 
@@ -70,7 +70,7 @@ def get_exporter(nmax):
       '# reject stp {:f}\n'+\
       '# triangle stp {:f}\n'+\
       '# size {:d}\n'
-      
+
     meta = meta.format(
       data['procs'],
       vnum,
@@ -85,9 +85,9 @@ def get_exporter(nmax):
    )
     export_obj(
       'mesh',
-      fn, 
-      verts = verts[:vnum,:], 
-      faces = tris[:tnum,:], 
+      fn,
+      verts = verts[:vnum,:],
+      faces = tris[:tnum,:],
       meta = meta
     )
 

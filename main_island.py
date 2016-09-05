@@ -1,7 +1,7 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function
+
 
 from numpy import pi
 from numpy import sqrt
@@ -77,7 +77,7 @@ def show(render, dm):
 def main():
 
   from differentialMesh import DifferentialMesh
-  from render.render import Render
+  from iutils.render import Render
   from time import time
   from modules.helpers import print_stats
 
@@ -96,10 +96,10 @@ def main():
 
   tsum = 0
 
-  for i in xrange(10000):
+  for i in range(10000):
 
     t1 = time()
-    for _ in xrange(STEPS_ITT):
+    for _ in range(STEPS_ITT):
 
       DM.optimize_position(
         ATTRACT_STP,

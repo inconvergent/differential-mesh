@@ -29,11 +29,11 @@ class named_sub_timers(object):
 
   def p(self):
 
-    print('{:s}'.format('' if not self.name else self.name))
+    print(('{:s}'.format('' if not self.name else self.name)))
 
-    for n,t in self.times.iteritems():
+    for n,t in self.times.items():
 
-      print('{:s}\t{:0.6f}'.format(n,t))
+      print(('{:s}\t{:0.6f}'.format(n,t)))
 
-    print('total\t{:0.6f}\n'.format(self.total))
+    print(('total\t{:0.6f}\n'.format(self.total)))
 

@@ -28,8 +28,10 @@ neighbours.
 In order for this code to run you must first download and install these two
 repositories:
 
-*    `render`: https://github.com/inconvergent/render
+*    `iutils`: https://github.com/inconvergent/iutils
 *    `zonemap`: https://github.com/inconvergent/zonemap
+*    `fn`: https://github.com/inconvergent/fn-python3 (used to generated file
+     names, you can remove this dependency in the main files.)
 
 ## Other Dependencies
 
@@ -47,37 +49,8 @@ in Ubuntu 14.04 LTS, but my guess is that it should work on most other
 platforms platforms as well.  However i know that the scripted install in
 `./install` will not work in Windows
 
-## Running it on OS X
-
-To install on OS X, you'll need to install [OpenMP /
-Clang](https://clang-omp.github.io/), and then have cc linked to that
-installation. So, in the differential-line directory:
-
-```bash
-$ brew install clang-omp
-$ ln -s /usr/local/bin/clang-omp /usr/local/bin/cc
-$ ./install
-$ rm /usr/local/bin/cc
-```
-
-Also, you'll need to have pygtk installed to run the included files.
-
-```bash
-$ brew install pygtk
-```
-
-You should now have a working copy installed.
-
-## Running it on Windows?
-
-The code will probably work just fine under Windows, but I'm not sure how to
-install it. (Let me know if you get it working!)
-
 ## Similar code
 
 If you find this alorithm insteresting you might also want to check out:
 https://github.com/inconvergent/differential-line.
-
------------
-http://inconvergent.net
 

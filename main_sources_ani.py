@@ -1,7 +1,7 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function
+
 
 from numpy import pi
 from numpy import sqrt
@@ -11,7 +11,7 @@ from numpy import sin
 from numpy.random import random
 
 NMAX = 10e7
-SIZE = 1000
+SIZE = 512
 ONE = 1./SIZE
 
 RAD = 2*ONE
@@ -28,7 +28,7 @@ ATTRACT_STP = STP*0.1
 REJECT_STP = STP*0.1
 TRIANGLE_STP = STP*0.01
 ALPHA = 0.05
-DIMINISH = 0.99
+DIMINISH = 0.98
 
 MINIMUM_LENGTH = H*0.8
 MAXIMUM_LENGTH = H*2
@@ -39,7 +39,7 @@ FLIP_LIMIT = NEARL*0.5
 BACK = [1,1,1,1]
 FRONT = [0,0,0,0.3]
 
-NUM_SOURCES = 100
+NUM_SOURCES = 50
 
 TWOPI = pi*2.
 
@@ -48,8 +48,6 @@ PROCS = 2
 np_coord = zeros((NMAX,6), 'float')
 
 i = 0
-steps_runs = 0
-
 
 def show(render, dm, sources):
 
@@ -74,7 +72,8 @@ def show(render, dm, sources):
     render.set_front(rgb)
     render_triangle(*vv,fill=True)
 
-  #render.write_to_png('ani_{:05d}.png'.format(i))
+  if not i%2:
+    render.write_to_png('ani_{:05d}.png'.format(i))
 
   i += 1
 
@@ -86,20 +85,18 @@ def steps(dm):
 
   from numpy import array
 
-
-  global steps_runs
-  steps_runs += 1
-
   t1 = time()
 
   dm.find_nearby_sources()
 
   henum = dm.get_henum()
 
-  surface_edges = array(
-    [dm.is_surface_edge(i)>0 and r<dm.get_edge_intensity(i)
-    for i,r in enumerate(random(size=henum))],
-    'bool').nonzero()[0]
+  surface_edges = array([
+    dm.is_surface_edge(i)>0 and r<dm.get_edge_intensity(i)
+    for i,r in enumerate(random(size=henum))
+    ],
+    'bool'
+    ).nonzero()[0]
 
   rnd = random(len(surface_edges)*2)
   the = (1.-2*rnd[::2])*pi
@@ -108,24 +105,24 @@ def steps(dm):
   dy = sin(the)*rad
 
   dm.new_triangles_from_surface_edges(
-    surface_edges,
-    len(surface_edges),
-    H,
-    dx,
-    dy,
-    MINIMUM_LENGTH,
-    MAXIMUM_LENGTH,
-    1
-  )
+      surface_edges,
+      len(surface_edges),
+      H,
+      dx,
+      dy,
+      MINIMUM_LENGTH,
+      MAXIMUM_LENGTH,
+      1
+      )
 
   dm.optimize_position(
-    ATTRACT_STP,
-    REJECT_STP,
-    TRIANGLE_STP,
-    ALPHA,
-    DIMINISH,
-    1
-  )
+      ATTRACT_STP,
+      REJECT_STP,
+      TRIANGLE_STP,
+      ALPHA,
+      DIMINISH,
+      1
+      )
 
   henum = dm.get_henum()
 
@@ -138,17 +135,15 @@ def steps(dm):
     return False
 
   t2 = time()
-  print_stats(steps_runs, t2-t1, dm)
+  print_stats(0, t2-t1, dm)
 
   return True
 
 
 def main():
 
-  import gtk
-
   from differentialMesh import DifferentialMesh
-  from render.render import Animate
+  from iutils.render import Animate
   from modules.helpers import darts
 
 
@@ -169,8 +164,8 @@ def main():
 
   render = Animate(SIZE, BACK, FRONT, wrap)
   render.set_line_width(LINEWIDTH)
+  render.start()
 
-  gtk.main()
 
 
 if __name__ == '__main__' :

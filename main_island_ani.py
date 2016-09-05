@@ -1,7 +1,7 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function
+
 
 from numpy import pi
 from numpy import sqrt
@@ -84,7 +84,7 @@ def steps(dm):
   steps_runs += 1
 
   t1 = time()
-  for i in xrange(STEPS_ITT):
+  for i in range(STEPS_ITT):
 
     dm.optimize_position(
       ATTRACT_STP,
@@ -154,10 +154,8 @@ i = 0
 
 def main():
 
-  import gtk
-
   from differentialMesh import DifferentialMesh
-  from render.render import Animate
+  from iutils.render import Animate
 
   DM = DifferentialMesh(NMAX, 2*FARL, NEARL, FARL, PROCS)
 
@@ -172,8 +170,8 @@ def main():
 
   render = Animate(SIZE, BACK, FRONT, wrap)
   render.set_line_width(LINEWIDTH)
+  render.start()
 
-  gtk.main()
 
 
 if __name__ == '__main__' :
